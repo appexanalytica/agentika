@@ -1,52 +1,38 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, FileText, Users, KanbanSquare, CheckSquare,
+  LayoutDashboard, FileText, Users as UsersIcon, KanbanSquare, CheckSquare,
   Mail, BarChart3, Settings, LogOut, Sparkles, ChevronLeft, ChevronRight,
+  User,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
+import { store } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-const allNav = [
-  { to: "/admin",          label: "Dashboard", icon: LayoutDashboard, exact: true, roles: ['superadmin', 'admin', 'user'] },
-  { to: "/admin/blog",     label: "Proyectos",      icon: FileText, roles: ['superadmin', 'admin', 'user'] },
-  { to: "/admin/users",    label: "Usuarios",      icon: Users, roles: ['superadmin', 'admin'] },
-  { to: "/admin/leads",    label: "Leads",     icon: KanbanSquare, roles: ['superadmin', 'admin', 'user'] },
-  { to: "/admin/pipeline", label: "Pipeline",  icon: CheckSquare, roles: ['superadmin', 'admin', 'user'] },
-  { to: "/admin/tasks",    label: "Tareas",    icon: Mail, roles: ['superadmin', 'admin', 'user'] },
-  { to: "/admin/mail",     label: "Correo",    icon: BarChart3, roles: ['superadmin', 'admin'] },
-  { to: "/admin/analytics",label: "Analytics", icon: Settings, roles: ['superadmin', 'admin'] },
-  { to: "/admin/settings", label: "Ajustes",   icon: Settings, roles: ['superadmin'] },
+const nav = [
+  { to: "/admin",          label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { to: "/admin/blog",     label: "Blog",      icon: FileText },
+  { to: "/admin/leads",    label: "Leads",     icon: UsersIcon },
+  { to: "/admin/pipeline", label: "Pipeline",  icon: KanbanSquare },
+  { to: "/admin/tasks",    label: "Tareas",    icon: CheckSquare },
+  { to: "/admin/emails",   label: "Emails",    icon: Mail },
+  { to: "/admin/analytics",label: "Analytics", icon: BarChart3 },
+  { to: "/admin/users",    label: "Usuarios",  icon: UsersIcon, protected: true, roles: ['super_admin', 'admin'] as const },
+  { to: "/admin/settings", label: "Ajustes",   icon: Settings },
 ];
 
 export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
-
-  const userRole = useMemo(() => {
-    const stored = localStorage.getItem('auth_user');
-    if (stored) {
-      try {
-        const user = JSON.parse(stored);
-        return user.role || 'user';
-      } catch {
-        return 'user';
-      }
-    }
-    return 'user';
-  }, []);
-
-  const nav = useMemo(() => {
-    return allNav.filter(item => item.roles.includes(userRole as any));
-  }, [userRole]);
+  const user = store.getState().user;
 
   const isActive = (to: string, exact?: boolean) =>
     exact ? path === to : path === to || path.startsWith(to + "/");
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-    navigate({ to: '/login' });
+  const canAccess = (item: any) => {
+    if (!item.protected) return true;
+    if (!user) return false;
+    if (item.roles) return item.roles.includes(user.role);
+    return user.role === 'super_admin' || user.role === 'admin';
   };
 
   return (
@@ -73,7 +59,7 @@ export function AdminSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
-        {nav.map((item) => {
+        {nav.filter(canAccess).map((item) => {
           const active = isActive(item.to, item.exact);
           const Icon = item.icon;
           return (
@@ -100,6 +86,19 @@ export function AdminSidebar() {
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-2 space-y-1">
+        <Link
+          to="/admin/profile"
+          className={cn(
+            "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+            path === "/admin/profile"
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+          )}
+          title={collapsed ? "Perfil" : undefined}
+        >
+          <User className="size-[18px]" />
+          {!collapsed && <span>Mi Perfil</span>}
+        </Link>
         <button
           onClick={() => setCollapsed((c) => !c)}
           className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
@@ -109,7 +108,7 @@ export function AdminSidebar() {
           {!collapsed && <span>Colapsar</span>}
         </button>
         <button
-          onClick={handleLogout}
+          onClick={() => store.logout()}
           className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/60 hover:bg-destructive/15 hover:text-destructive transition-colors"
           title="Cerrar sesión"
         >

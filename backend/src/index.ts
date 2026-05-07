@@ -1,143 +1,96 @@
-import express, { Express, Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import dotenv from 'dotenv';
-import connectDB from './config/database';
-import { initMinIO } from './config/minio';
-import { errorHandler } from './middleware/errorHandler';
+import { errorHandler } from './middleware/errorHandler.js';
+import { apiRouter } from './routes/index.js';
+import connectDB from './config/database.js';
+import User from './models/User.js';
 
-// Routes
-import authRoutes from './routes/auth';
-import fileRoutes from './routes/files';
-import blogRoutes from './routes/blog';
-import leadRoutes from './routes/leads';
-import taskRoutes from './routes/tasks';
-import analyticsRoutes from './routes/analytics';
-import mailRoutes from './routes/mail';
-import userRoutes from './routes/users';
-
-// Load environment variables
 dotenv.config();
 
-const app: Express = express();
+const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
-
-// Health check route (before CORS middleware to allow access)
-app.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'Server is running ✅' });
-});
-
-// CORS middleware for API routes
+app.use(helmet());
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    const allowed = [
+      process.env.CORS_ORIGIN,
+      'http://localhost:8080',
+      'http://localhost:8081',
+      'http://127.0.0.1:8080',
+      'http://127.0.0.1:8081',
+    ].filter(Boolean);
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(morgan('combined'));
 app.use(express.json());
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/files', fileRoutes);
-app.use('/api/leads', leadRoutes);
-app.use('/api/blog', blogRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/mail', mailRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api', apiRouter);
 
-// 404 handler
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    error: 'Not found',
-    path: req.path,
-  });
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Error handler (must be last)
 app.use(errorHandler);
 
-// Function to create default superadmin user if it doesn't exist
-const createDefaultSuperAdmin = async (): Promise<void> => {
+const seedSuperAdmin = async () => {
   try {
-    const User = (await import('./models/User.js')).default;
     const username = process.env.SEED_ADMIN_USERNAME || 'admin';
     const password = process.env.SEED_ADMIN_PASSWORD;
-    const email = process.env.SEED_ADMIN_EMAIL;
+    const email = process.env.SEED_ADMIN_EMAIL || 'admin@agentika.com';
 
     if (!password) {
-      console.warn('⚠️  SEED_ADMIN_PASSWORD not set in .env, skipping superadmin creation');
+      console.warn('SEED_ADMIN_PASSWORD not set, skipping super admin seed');
       return;
     }
 
-    const existingAdmin = await User.findOne({ username });
-
-    if (!existingAdmin) {
-      const bcryptjs = (await import('bcryptjs')).default;
-      const hashedPassword = await bcryptjs.hash(password, 12);
-
-      const admin = new User({
-        username,
-        email,
-        password: hashedPassword,
-        firstName: 'Super',
-        lastName: 'Admin',
-        role: 'superadmin',
-        isActive: true,
-      });
-      await admin.save();
-      console.log('✅ Default superadmin user created');
-      console.log(`   Username: ${username}`);
-      console.log(`   Email: ${email}`);
-    } else {
-      // Update password if it exists
-      const bcryptjs = (await import('bcryptjs')).default;
-      const hashedPassword = await bcryptjs.hash(password, 12);
-      await User.findByIdAndUpdate(existingAdmin._id, { password: hashedPassword });
-      console.log('✅ Superadmin user password updated');
-      console.log(`   Username: ${username}`);
+    const existing = await User.findOne({ username });
+    if (existing) {
+      if (existing.role !== 'super_admin') {
+        existing.role = 'super_admin';
+        await existing.save();
+        console.log('Existing admin promoted to super_admin');
+      } else {
+        console.log('Super admin already exists');
+      }
+      return;
     }
-  } catch (error) {
-    console.error('Error creating default superadmin:', error);
+
+    await User.create({
+      username,
+      email,
+      passwordHash: password,
+      firstName: 'Super',
+      lastName: 'Admin',
+      role: 'super_admin',
+      isActive: true,
+    });
+
+    console.log(`Super admin "${username}" created successfully`);
+  } catch (err) {
+    console.error('Failed to seed super admin:', err);
   }
 };
 
-// Initialize server
-const startServer = async (): Promise<void> => {
+const start = async () => {
   try {
-    // Connect to MongoDB
     await connectDB();
-
-    // Create default superadmin user
-    await createDefaultSuperAdmin();
-
-    // Initialize MinIO
-    await initMinIO();
-
-    // Start server
+    await seedSuperAdmin();
     app.listen(PORT, () => {
-      console.log(`
-╔═══════════════════════════════════════╗
-║   Agentika Backend Server Started      ║
-║   Port: ${PORT}                           ║
-║   Environment: ${process.env.NODE_ENV || 'development'}     ║
-╚═══════════════════════════════════════╝
-      `);
+      console.log(`Server running on port ${PORT}`);
     });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+  } catch (err) {
+    console.error('Failed to start server:', err);
     process.exit(1);
   }
 };
 
-startServer();
-
-export default app;
+start();

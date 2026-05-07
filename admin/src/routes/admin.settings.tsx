@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/admin/ui-bits";
-import { User, Bell, Mail, Key } from "lucide-react";
+import { Sparkles, User, Bell, Database, Mail, Key } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({ meta: [{ title: "Ajustes | AGENTIKA Admin" }] }),
@@ -32,6 +32,21 @@ function SettingsPage() {
         <Section icon={<Key className="size-5" />} title="API Keys" description="Conexiones a servicios externos">
           <p className="text-sm text-muted-foreground">No hay claves configuradas todavía. Conecta el backend para gestionarlas de forma segura.</p>
         </Section>
+
+        <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 p-6">
+          <div className="flex items-start gap-4">
+            <div className="size-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+              <Database className="size-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold flex items-center gap-2">Activa el backend <Sparkles className="size-4 text-primary" /></h3>
+              <p className="text-sm text-muted-foreground mt-1">Todo lo que ves en este panel funciona con datos mock en memoria. Activa Lovable Cloud para persistir leads, blog, emails y autenticación real con un solo click.</p>
+              <button disabled className="mt-3 inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold opacity-60 cursor-not-allowed">
+                Conectar backend
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

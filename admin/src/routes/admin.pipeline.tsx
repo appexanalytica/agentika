@@ -1,70 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext, type DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors,
 } from "@dnd-kit/core";
 import { PageHeader, Badge } from "@/components/admin/ui-bits";
-import { leadsAPI, type Lead } from "@/hooks/useAPI";
+import { useStore, store } from "@/lib/store";
+import { leadStatusMeta, pipelineColumns, type Lead, type LeadStatus } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/admin/pipeline")({
   head: () => ({ meta: [{ title: "Pipeline | AGENTIKA Admin" }] }),
   component: PipelinePage,
 });
 
-const pipelineColumns: Lead['status'][] = ['nuevo', 'contactado', 'calificado', 'propuesta', 'cerrado', 'perdido'];
-
-const leadStatusMeta: Record<Lead['status'], { label: string; color: string }> = {
-  nuevo: { label: 'Nuevo', color: 'bg-success/15 text-success border-success/30' },
-  contactado: { label: 'Contactado', color: 'bg-info/15 text-info border-info/30' },
-  calificado: { label: 'Calificado', color: 'bg-warning/15 text-warning border-warning/30' },
-  propuesta: { label: 'Propuesta', color: 'bg-primary/15 text-primary border-primary/30' },
-  cerrado: { label: 'Cerrado', color: 'bg-muted text-muted-foreground border-border' },
-  perdido: { label: 'Perdido', color: 'bg-destructive/15 text-destructive border-destructive/30' },
-};
-
 function PipelinePage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const leads = useStore((s) => s.leads);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-  const loadLeads = async () => {
-    try {
-      setLoading(true);
-      const data = await leadsAPI.getLeads(1, 100);
-      setLeads(data.leads);
-    } catch (error) {
-      console.error('Error loading leads:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadLeads();
-  }, []);
-
   const grouped = useMemo(() => {
-    const g: Record<Lead['status'], Lead[]> = { nuevo: [], contactado: [], calificado: [], propuesta: [], cerrado: [], perdido: [] };
+    const g: Record<LeadStatus, Lead[]> = { nuevo: [], contactado: [], cualificado: [], propuesta: [], ganado: [], perdido: [] };
     for (const l of leads) g[l.status].push(l);
     return g;
   }, [leads]);
 
-  const totalByCol: Record<Lead['status'], number> = useMemo(
-    () => Object.fromEntries(pipelineColumns.map((c) => [c, grouped[c].reduce((s, l) => s + (l.value || 0), 0)])) as Record<Lead['status'], number>,
+  const totalByCol: Record<LeadStatus, number> = useMemo(
+    () => Object.fromEntries(pipelineColumns.map((c) => [c, grouped[c].reduce((s, l) => s + l.value, 0)])) as Record<LeadStatus, number>,
     [grouped]
   );
 
-  const onDragEnd = async (e: DragEndEvent) => {
+  const onDragEnd = (e: DragEndEvent) => {
     const leadId = e.active.id as string;
-    const newStatus = e.over?.id as Lead['status'] | undefined;
-    if (newStatus && pipelineColumns.includes(newStatus)) {
-      try {
-        await leadsAPI.updateLeadStatus(leadId, newStatus);
-        loadLeads();
-      } catch (error) {
-        console.error('Error updating lead status:', error);
-      }
-    }
+    const newStatus = e.over?.id as LeadStatus | undefined;
+    if (newStatus && pipelineColumns.includes(newStatus)) store.updateLeadStatus(leadId, newStatus);
   };
 
   return (
@@ -74,24 +40,18 @@ function PipelinePage() {
         description="Arrastra los leads entre columnas para actualizar su estado."
       />
 
-      {loading ? (
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">Cargando pipeline...</p>
+      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {pipelineColumns.map((status) => (
+            <Column key={status} status={status} leads={grouped[status]} total={totalByCol[status]} />
+          ))}
         </div>
-      ) : (
-        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {pipelineColumns.map((status) => (
-              <Column key={status} status={status} leads={grouped[status]} total={totalByCol[status]} />
-            ))}
-          </div>
-        </DndContext>
-      )}
+      </DndContext>
     </div>
   );
 }
 
-function Column({ status, leads, total }: { status: Lead['status']; leads: Lead[]; total: number }) {
+function Column({ status, leads, total }: { status: LeadStatus; leads: Lead[]; total: number }) {
   const meta = leadStatusMeta[status];
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
@@ -104,14 +64,14 @@ function Column({ status, leads, total }: { status: Lead['status']; leads: Lead[
         </div>
       </div>
       <div className="p-2 space-y-2 min-h-[200px]">
-        {leads.map((lead) => <Card key={lead._id} lead={lead} />)}
+        {leads.map((lead) => <Card key={lead.id} lead={lead} />)}
       </div>
     </div>
   );
 }
 
 function Card({ lead }: { lead: Lead }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead._id });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
 
   return (
@@ -120,8 +80,8 @@ function Card({ lead }: { lead: Lead }) {
       className={`bg-card border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-primary/40 transition ${isDragging ? "opacity-40 shadow-2xl" : ""}`}
     >
       <p className="font-medium text-sm truncate">{lead.name}</p>
-      <p className="text-xs text-muted-foreground truncate">{lead.company || '—'}</p>
-      {lead.value && lead.value > 0 && (
+      <p className="text-xs text-muted-foreground truncate">{lead.company}</p>
+      {lead.value > 0 && (
         <p className="mt-2 text-xs font-mono text-primary font-semibold">{(lead.value / 1000).toFixed(1)}k €</p>
       )}
       {lead.tags.length > 0 && (

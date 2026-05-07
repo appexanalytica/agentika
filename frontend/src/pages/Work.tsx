@@ -1,62 +1,78 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import Navigation from "@/components/Navigation";
-import { useBlog } from "@/hooks/useAPI";
-import project1 from "@/assets/project-1.jpg";
-import project2 from "@/assets/project-2.jpg";
-import project3 from "@/assets/project-3.jpg";
+import workEcommerce from "@/assets/work-ecommerce.jpg";
+import workErpInmobiliario from "@/assets/work-erp-inmobiliario.jpg";
+import workAiEngine from "@/assets/work-ai-engine.jpg";
+import workArApp from "@/assets/work-ar-app.jpg";
+import workDashboard from "@/assets/work-dashboard.jpg";
+import workSaasCorporate from "@/assets/work-saas-corporate.jpg";
 
 const Work = () => {
   const [activeCategory, setActiveCategory] = useState("TODOS");
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { getPosts } = useBlog();
+  const projects = [
+    {
+      image: workEcommerce,
+      title: "PLATAFORMA ECOMMERCE",
+      location: "ARGENTINA, 2024",
+      category: "PLATAFORMAS",
+      subtitle: "ROOM PLANNER",
+      description: "Ecosistema digital orientado a la venta de productos físicos con integración total entre frontend, backend y logística. El sistema prioriza escalabilidad, experiencia de usuario y control centralizado de la operación.",
+      stack: "MERN + AR",
+      year: "2024"
+    },
+    {
+      image: workErpInmobiliario,
+      title: "SISTEMA ERP + CRM INMOBILIARIO",
+      location: "ARGENTINA, 2024",
+      category: "EMPRESARIAL",
+      subtitle: "ANABELLA LUNA",
+      description: "Plataforma integral que unifica gestión administrativa, operación comercial y presencia digital en un solo entorno. Diseñada para optimizar procesos, aumentar conversiones y escalar operaciones inmobiliarias.",
+      stack: "Node.js + React + MongoDB",
+      year: "2024"
+    },
+    {
+      image: workAiEngine,
+      title: "MOTOR DE RECOMENDACIÓN INTELIGENTE",
+      location: "GLOBAL, 2025",
+      category: "IA & DATA",
+      subtitle: "SMART MATCH ENGINE",
+      description: "Sistema de inteligencia artificial aplicado a la búsqueda y recomendación automatizada de propiedades y productos. Analiza comportamiento, preferencias y contexto para optimizar decisiones comerciales.",
+      stack: "IA + Web Scraping + APIs",
+      year: "2025"
+    },
+    {
+      image: workArApp,
+      title: "APLICACIÓN DE REALIDAD AUMENTADA",
+      location: "GLOBAL, 2025",
+      category: "PRODUCTOS DIGITALES",
+      subtitle: "ROOM PLANNER AR",
+      description: "Experiencia inmersiva que permite visualizar productos en espacios reales mediante realidad aumentada. Integración entre motor 3D y entorno mobile para mejorar la toma de decisiones del usuario.",
+      stack: "React Native + Unity",
+      year: "2025"
+    },
+    {
+      image: workDashboard,
+      title: "DASHBOARD ANALÍTICO",
+      location: "GLOBAL, 2024",
+      category: "IA & DATA",
+      subtitle: "APPEX ANALYTICS",
+      description: "Sistema de visualización de datos en tiempo real orientado a la toma de decisiones ejecutivas. Centraliza métricas clave y traduce datos complejos en información accionable.",
+      stack: "Data Visualization + Realtime",
+      year: "2024"
+    },
+    {
+      image: workSaasCorporate,
+      title: "PLATAFORMA SAAS CORPORATIVA",
+      location: "GLOBAL, 2023",
+      category: "EMPRESARIAL",
+      subtitle: "ENTERPRISE CORE SYSTEM",
+      description: "Arquitectura modular para empresas que requieren control, seguridad y escalabilidad. Diseñada para integrarse con múltiples sistemas y soportar operaciones de alto volumen.",
+      stack: "Microservicios + Cloud",
+      year: "2023"
+    }
+  ];
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        setLoading(true);
-        const data = await getPosts(1, 100, 'published');
-        
-        // Mapear los datos del backend al formato del frontend
-        const mappedProjects = (data.posts || []).map((post: any, index: number) => ({
-          image: post.cover || post.thumbnail || [project1, project2, project3][index % 3],
-          title: post.title.toUpperCase(),
-          location: `GLOBAL, ${new Date(post.publishedAt || post.createdAt).getFullYear()}`,
-          category: (post.category || 'General').toUpperCase(),
-          subtitle: post.slug.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          description: post.excerpt,
-          stack: post.tags?.join(' + ') || 'Tech Stack',
-          year: new Date(post.publishedAt || post.createdAt).getFullYear().toString(),
-          _id: post._id,
-          slug: post.slug
-        }));
-        
-        setProjects(mappedProjects);
-      } catch (error) {
-        console.error('Error loading projects:', error);
-        // Fallback a datos de ejemplo si falla la API
-        setProjects([
-          {
-            image: project1,
-            title: "PLATAFORMA ECOMMERCE",
-            location: "ARGENTINA, 2024",
-            category: "PLATAFORMAS",
-            subtitle: "ROOM PLANNER",
-            description: "Ecosistema digital orientado a la venta de productos físicos con integración total entre frontend, backend y logística.",
-            stack: "MERN + AR",
-            year: "2024"
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProjects();
-  }, [getPosts]);
-
-  const categories = ["TODOS", ...Array.from(new Set(projects.map(p => p.category)))].filter((v, i, a) => a.indexOf(v) === i);
+  const categories = ["TODOS", "PLATAFORMAS", "EMPRESARIAL", "IA & DATA", "PRODUCTOS DIGITALES"];
 
   const filteredProjects = activeCategory === "TODOS" 
     ? projects 
@@ -114,66 +130,56 @@ const Work = () => {
       <section className="pb-32">
         <div className="container mx-auto px-6">
           <div className="max-w-7xl mx-auto">
-            {loading ? (
-              <div className="text-center py-20">
-                <p className="text-muted-foreground">Cargando proyectos...</p>
-              </div>
-            ) : filteredProjects.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-muted-foreground">No hay proyectos publicados aún.</p>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-16 lg:gap-20">
-                {filteredProjects.map((project, index) => (
-                  <Link key={project._id || index} to={`/work/${project.slug}`} className="group block">
-                    <div className="relative overflow-hidden mb-8">
-                      <img
-                        src={project.image}
-                        alt={project.title}
-                        className="w-full h-[60vh] object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                      {/* Project Category Badge */}
-                      <div className="absolute top-6 left-6 bg-background/90 backdrop-blur-sm px-4 py-2">
-                        <span className="text-minimal text-foreground">
-                          {project.category}
-                        </span>
-                      </div>
+            <div className="grid md:grid-cols-2 gap-16 lg:gap-20">
+              {filteredProjects.map((project, index) => (
+                <div key={index} className="group cursor-pointer">
+                  <div className="relative overflow-hidden mb-8">
+                    <img 
+                      src={project.image} 
+                      alt={project.title}
+                      className="w-full h-[60vh] object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Project Category Badge */}
+                    <div className="absolute top-6 left-6 bg-background/90 backdrop-blur-sm px-4 py-2">
+                      <span className="text-minimal text-foreground">
+                        {project.category}
+                      </span>
                     </div>
-
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-2xl lg:text-3xl font-light text-architectural mb-2 group-hover:text-muted-foreground transition-colors duration-500">
-                          {project.title}
-                        </h3>
-                        <p className="text-minimal text-foreground mb-1">
-                          {project.subtitle}
-                        </p>
-                        <p className="text-minimal text-muted-foreground">
-                          {project.location}
-                        </p>
-                      </div>
-
-                      <p className="text-muted-foreground leading-relaxed">
-                        {project.description}
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-2xl lg:text-3xl font-light text-architectural mb-2 group-hover:text-muted-foreground transition-colors duration-500">
+                        {project.title}
+                      </h3>
+                      <p className="text-minimal text-foreground mb-1">
+                        {project.subtitle}
                       </p>
-
-                      <div className="flex gap-8 pt-4 border-t border-border">
-                        <div>
-                          <p className="text-minimal text-muted-foreground mb-1">STACK</p>
-                          <p className="text-foreground">{project.stack}</p>
-                        </div>
-                        <div>
-                          <p className="text-minimal text-muted-foreground mb-1">AÑO</p>
-                          <p className="text-foreground">{project.year}</p>
-                        </div>
+                      <p className="text-minimal text-muted-foreground">
+                        {project.location}
+                      </p>
+                    </div>
+                    
+                    <p className="text-muted-foreground leading-relaxed">
+                      {project.description}
+                    </p>
+                    
+                    <div className="flex gap-8 pt-4 border-t border-border">
+                      <div>
+                        <p className="text-minimal text-muted-foreground mb-1">STACK</p>
+                        <p className="text-foreground">{project.stack}</p>
+                      </div>
+                      <div>
+                        <p className="text-minimal text-muted-foreground mb-1">AÑO</p>
+                        <p className="text-foreground">{project.year}</p>
                       </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

@@ -1,19 +1,22 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import bcryptjs from 'bcryptjs';
+import bcrypt from 'bcryptjs';
+
+export type UserRole = 'super_admin' | 'admin' | 'user';
 
 export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId;
   username: string;
   email: string;
-  password: string;
+  passwordHash: string;
   firstName: string;
   lastName: string;
-  role: 'superadmin' | 'admin' | 'user';
+  role: UserRole;
   avatar?: string;
   isActive: boolean;
-  createdBy?: mongoose.Types.ObjectId;
+  lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
-  comparePassword(password: string): Promise<boolean>;
+  comparePassword(candidate: string): Promise<boolean>;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -24,32 +27,38 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
+      minlength: [3, 'Username must be at least 3 characters'],
+      maxlength: [30, 'Username must be at most 30 characters'],
+      match: [/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores'],
     },
     email: {
       type: String,
+      required: [true, 'Email is required'],
       unique: true,
-      sparse: true,
       lowercase: true,
       trim: true,
       match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Invalid email format'],
     },
-    password: {
+    passwordHash: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
       select: false,
     },
     firstName: {
       type: String,
       required: [true, 'First name is required'],
+      trim: true,
+      maxlength: [50, 'First name must be at most 50 characters'],
     },
     lastName: {
       type: String,
       required: [true, 'Last name is required'],
+      trim: true,
+      maxlength: [50, 'Last name must be at most 50 characters'],
     },
     role: {
       type: String,
-      enum: ['superadmin', 'admin', 'user'],
+      enum: ['super_admin', 'admin', 'user'],
       default: 'user',
     },
     avatar: {
@@ -60,34 +69,25 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: true,
     },
-    createdBy: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
+    lastLogin: {
+      type: Date,
+      default: null,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Hash password before saving
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
+UserSchema.index({ role: 1 });
 
-  try {
-    const salt = await bcryptjs.genSalt(12);
-    this.password = await bcryptjs.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error as Error);
-  }
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('passwordHash')) return next();
+  const salt = await bcrypt.genSalt(12);
+  this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+  next();
 });
 
-// Compare password method
-UserSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
-  return bcryptjs.compare(password, this.password);
+UserSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {
+  return bcrypt.compare(candidate, this.passwordHash);
 };
 
 export default mongoose.model<IUser>('User', UserSchema);

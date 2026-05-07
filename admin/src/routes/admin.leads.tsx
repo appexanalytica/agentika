@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Search, Mail, Phone, Building2, Tag, MessageSquare, Trash2, X, Send } from "lucide-react";
 import { PageHeader, Badge } from "@/components/admin/ui-bits";
-import { leadsAPI, type Lead } from "@/hooks/useAPI";
+import { useStore, store } from "@/lib/store";
+import { leadStatusMeta, pipelineColumns, type Lead, type LeadStatus } from "@/lib/mock-data";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -12,48 +13,21 @@ export const Route = createFileRoute("/admin/leads")({
 });
 
 function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const leads = useStore((s) => s.leads);
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | Lead['status']>("all");
+  const [filter, setFilter] = useState<"all" | LeadStatus>("all");
   const [selected, setSelected] = useState<Lead | null>(null);
-
-  const loadLeads = async () => {
-    try {
-      setLoading(true);
-      const data = await leadsAPI.getLeads(1, 100, filter === 'all' ? undefined : filter);
-      setLeads(data.leads);
-    } catch (error) {
-      console.error('Error loading leads:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadLeads();
-  }, [filter]);
 
   const filtered = useMemo(() => {
     return leads
+      .filter((l) => filter === "all" || l.status === filter)
       .filter((l) =>
         l.name.toLowerCase().includes(q.toLowerCase()) ||
         l.email.toLowerCase().includes(q.toLowerCase()) ||
         (l.company ?? "").toLowerCase().includes(q.toLowerCase())
       )
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-  }, [leads, q]);
-
-  const leadStatusMeta: Record<Lead['status'], { label: string; color: string }> = {
-    nuevo: { label: 'Nuevo', color: 'bg-success/15 text-success border-success/30' },
-    contactado: { label: 'Contactado', color: 'bg-info/15 text-info border-info/30' },
-    calificado: { label: 'Calificado', color: 'bg-warning/15 text-warning border-warning/30' },
-    propuesta: { label: 'Propuesta', color: 'bg-primary/15 text-primary border-primary/30' },
-    cerrado: { label: 'Cerrado', color: 'bg-muted text-muted-foreground border-border' },
-    perdido: { label: 'Perdido', color: 'bg-destructive/15 text-destructive border-destructive/30' },
-  };
-
-  const pipelineColumns: Lead['status'][] = ['nuevo', 'contactado', 'calificado', 'propuesta', 'cerrado', 'perdido'];
+  }, [leads, q, filter]);
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto">
@@ -91,12 +65,10 @@ function LeadsPage() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="px-5 py-16 text-center text-muted-foreground text-sm">Cargando leads...</td></tr>
-            ) : filtered.map((l) => {
+            {filtered.map((l) => {
               const meta = leadStatusMeta[l.status];
               return (
-                <tr key={l._id} onClick={() => setSelected(l)} className="border-b border-border last:border-0 hover:bg-muted/30 cursor-pointer transition">
+                <tr key={l.id} onClick={() => setSelected(l)} className="border-b border-border last:border-0 hover:bg-muted/30 cursor-pointer transition">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="size-9 rounded-lg bg-gradient-to-br from-accent/30 to-accent/0 flex items-center justify-center text-sm font-semibold text-accent shrink-0">
@@ -111,7 +83,7 @@ function LeadsPage() {
                   <td className="px-5 py-4 text-muted-foreground">{l.company ?? "—"}</td>
                   <td className="px-5 py-4"><Badge className={meta.color}>{meta.label}</Badge></td>
                   <td className="px-5 py-4 text-muted-foreground text-xs">{l.source}</td>
-                  <td className="px-5 py-4 text-right font-mono">{l.value && l.value > 0 ? `${(l.value/1000).toFixed(0)}k €` : "—"}</td>
+                  <td className="px-5 py-4 text-right font-mono">{l.value > 0 ? `${(l.value/1000).toFixed(0)}k €` : "—"}</td>
                   <td className="px-5 py-4 text-muted-foreground text-xs">{formatDistanceToNow(new Date(l.createdAt), { addSuffix: true, locale: es })}</td>
                 </tr>
               );
@@ -123,7 +95,7 @@ function LeadsPage() {
         </table>
       </div>
 
-      {selected && <LeadDrawer lead={leads.find(l => l._id === selected._id) ?? selected} onClose={() => setSelected(null)} />}
+      {selected && <LeadDrawer lead={leads.find(l => l.id === selected.id) ?? selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
@@ -133,49 +105,12 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
 
-  const leadStatusMeta: Record<Lead['status'], { label: string; color: string }> = {
-    nuevo: { label: 'Nuevo', color: 'bg-success/15 text-success border-success/30' },
-    contactado: { label: 'Contactado', color: 'bg-info/15 text-info border-info/30' },
-    calificado: { label: 'Calificado', color: 'bg-warning/15 text-warning border-warning/30' },
-    propuesta: { label: 'Propuesta', color: 'bg-primary/15 text-primary border-primary/30' },
-    cerrado: { label: 'Cerrado', color: 'bg-muted text-muted-foreground border-border' },
-    perdido: { label: 'Perdido', color: 'bg-destructive/15 text-destructive border-destructive/30' },
-  };
-
-  const pipelineColumns: Lead['status'][] = ['nuevo', 'contactado', 'calificado', 'propuesta', 'cerrado', 'perdido'];
-
-  const updateStatus = async (status: Lead['status']) => {
-    try {
-      await leadsAPI.updateLeadStatus(lead._id, status);
-      onClose();
-      window.location.reload();
-    } catch (error) {
-      console.error('Error updating lead status:', error);
-      alert('Error al actualizar estado');
+  const sendEmail = () => {
+    if (!emailSubject.trim()) return;
+    if (typeof window !== "undefined") {
+      window.location.href = `mailto:${lead.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
     }
-  };
-
-  const addNote = async () => {
-    if (!note.trim()) return;
-    try {
-      await leadsAPI.addLeadNote(lead._id, { text: note, author: 'Admin' });
-      setNote("");
-      window.location.reload();
-    } catch (error) {
-      console.error('Error adding note:', error);
-      alert('Error al agregar nota');
-    }
-  };
-
-  const deleteLead = async () => {
-    try {
-      await leadsAPI.deleteLead(lead._id);
-      onClose();
-      window.location.reload();
-    } catch (error) {
-      console.error('Error deleting lead:', error);
-      alert('Error al eliminar lead');
-    }
+    setEmailSubject(""); setEmailBody("");
   };
 
   return (
@@ -206,7 +141,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
                 <Phone className="size-3.5" /> Llamar
               </a>
             )}
-            <button onClick={() => { if (confirm("¿Eliminar este lead?")) { deleteLead(); } }} className="size-9 bg-destructive/15 text-destructive rounded-lg hover:bg-destructive/25 transition flex items-center justify-center">
+            <button onClick={() => { if (confirm("¿Eliminar este lead?")) { store.deleteLead(lead.id); onClose(); } }} className="size-9 bg-destructive/15 text-destructive rounded-lg hover:bg-destructive/25 transition flex items-center justify-center">
               <Trash2 className="size-4" />
             </button>
           </div>
@@ -219,7 +154,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
                 const m = leadStatusMeta[s];
                 const active = lead.status === s;
                 return (
-                  <button key={s} onClick={() => updateStatus(s)}
+                  <button key={s} onClick={() => store.updateLeadStatus(lead.id, s)}
                     className={`px-2 py-1.5 rounded-md text-xs font-medium border transition ${active ? m.color : "border-border text-muted-foreground hover:bg-muted"}`}>
                     {m.label}
                   </button>
@@ -233,7 +168,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             <div className="flex items-center gap-2 text-muted-foreground"><Mail className="size-3.5" /><span className="font-mono text-xs">{lead.email}</span></div>
             {lead.phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="size-3.5" /><span className="font-mono text-xs">{lead.phone}</span></div>}
             {lead.company && <div className="flex items-center gap-2 text-muted-foreground"><Building2 className="size-3.5" /><span>{lead.company}</span></div>}
-            {lead.value && lead.value > 0 && <div className="flex items-center gap-2 text-primary font-semibold"><Tag className="size-3.5" /><span className="font-mono">{lead.value.toLocaleString()} €</span></div>}
+            {lead.value > 0 && <div className="flex items-center gap-2 text-primary font-semibold"><Tag className="size-3.5" /><span className="font-mono">{lead.value.toLocaleString()} €</span></div>}
           </div>
 
           {/* Tags */}
@@ -255,7 +190,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             <div className="mt-2 space-y-2">
               <input value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} placeholder="Asunto…" className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
               <textarea value={emailBody} onChange={(e) => setEmailBody(e.target.value)} placeholder="Mensaje…" rows={3} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
-              <a href={`mailto:${lead.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`} className="w-full bg-primary text-primary-foreground py-2 rounded-lg text-xs font-semibold hover:bg-primary-glow transition text-center block">Enviar email</a>
+              <button onClick={sendEmail} className="w-full bg-primary text-primary-foreground py-2 rounded-lg text-xs font-semibold hover:bg-primary-glow transition">Enviar email</button>
             </div>
           </div>
 
@@ -271,7 +206,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
               ))}
               {lead.notes.length === 0 && <p className="text-xs text-muted-foreground italic">Sin notas todavía.</p>}
               <div className="flex gap-2">
-                <input value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && note.trim()) { addNote(); } }} placeholder="Añadir nota… (Enter para guardar)" className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && note.trim()) { store.addLeadNote(lead.id, note.trim()); setNote(""); } }} placeholder="Añadir nota… (Enter para guardar)" className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40" />
               </div>
             </div>
           </div>

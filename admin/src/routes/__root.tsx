@@ -1,6 +1,9 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
+import { store } from "../lib/store";
+import { isBrowser } from "../lib/browser";
 
 function NotFoundComponent() {
   return (
@@ -65,5 +68,23 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  // Load initial data only on client-side (SSR-safe)
+  useEffect(() => {
+    if (isBrowser) {
+      // Si ya está autenticado por la restauración síncrona, cargar datos inmediatamente
+      const currentState = store.getState();
+      if (currentState.authed) {
+        store.loadData();
+      } else {
+        // Si no está autenticado, intentar restaurar
+        store.restoreAuth().then((restored) => {
+          if (restored) {
+            store.loadData();
+          }
+        });
+      }
+    }
+  }, []);
+
   return <Outlet />;
 }

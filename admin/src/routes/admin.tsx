@@ -1,63 +1,55 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { store } from "@/lib/store";
-import { authAPI } from "@/hooks/useAPI";
+
+// Verificación síncrona directa de localStorage - no depende del estado del store
+function isAuthenticatedSync(): boolean {
+  if (typeof window === 'undefined') return false;
+  const token = window.localStorage.getItem('auth_token');
+  const userJson = window.localStorage.getItem('auth_user');
+  if (!token || !userJson) return false;
+  try {
+    const user = JSON.parse(userJson);
+    return user && (user.role === 'admin' || user.role === 'super_admin');
+  } catch {
+    return false;
+  }
+}
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: async () => {
+    // 1. Verificación SINCRÓNICA inmediata desde localStorage
+    if (isAuthenticatedSync()) {
+      // Sincronizar store para que los componentes tengan acceso al usuario
+      store.syncAuthFromStorage();
+      return;
+    }
+    
+    // 2. Si no hay datos en localStorage, verificar estado del store
+    const state = store.getState();
+    if (state.authed && state.user) {
+      if (state.user.role !== 'admin' && state.user.role !== 'super_admin') {
+        throw redirect({ to: "/login" });
+      }
+      return;
+    }
+    
+    // 3. Intentar restaurar desde token
+    const restored = await store.restoreAuth();
+    
+    if (!restored) {
+      throw redirect({ to: "/login" });
+    }
+    
+    const newState = store.getState();
+    if (!newState.user || (newState.user.role !== 'admin' && newState.user.role !== 'super_admin')) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: AdminLayout,
 });
 
 function AdminLayout() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
-  
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (typeof window === 'undefined') {
-        setLoading(false);
-        return;
-      }
-
-      const token = localStorage.getItem('auth_token');
-      
-      if (!token) {
-        navigate({ to: "/login" });
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Validate token with backend
-        await authAPI.getAdminProfile();
-        setAuthenticated(true);
-        store.login();
-      } catch (error) {
-        console.error('Auth validation failed:', error);
-        localStorage.removeItem('auth_token');
-        store.logout();
-        navigate({ to: "/login" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [navigate]);
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-sm text-muted-foreground">Verificando autenticación...</div>
-      </div>
-    );
-  }
-
-  if (!authenticated) {
-    return null;
-  }
-  
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <AdminSidebar />

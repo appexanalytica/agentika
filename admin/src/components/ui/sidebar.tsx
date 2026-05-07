@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { setCookie, addWindowEventListener, removeWindowEventListener, isBrowser } from "@/lib/browser";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -82,8 +83,8 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        // This sets the cookie to keep the sidebar state (SSR-safe).
+        setCookie(SIDEBAR_COOKIE_NAME, String(openState), { maxAge: SIDEBAR_COOKIE_MAX_AGE, path: '/' });
       },
       [setOpenProp, open],
     );
@@ -93,8 +94,10 @@ const SidebarProvider = React.forwardRef<
       return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
     }, [isMobile, setOpen, setOpenMobile]);
 
-    // Adds a keyboard shortcut to toggle the sidebar.
+    // Adds a keyboard shortcut to toggle the sidebar (SSR-safe).
     React.useEffect(() => {
+      if (!isBrowser) return;
+
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
           event.preventDefault();
@@ -102,8 +105,8 @@ const SidebarProvider = React.forwardRef<
         }
       };
 
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
+      addWindowEventListener("keydown", handleKeyDown);
+      return () => removeWindowEventListener("keydown", handleKeyDown);
     }, [toggleSidebar]);
 
     // We add a state so that we can do data-state="expanded" or "collapsed".

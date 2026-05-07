@@ -1,158 +1,247 @@
-import { Request, Response, NextFunction } from 'express';
-import AuthService from '../services/AuthService';
-import { body } from 'express-validator';
+import { Request, Response } from 'express';
+import { validationResult } from 'express-validator';
+import User from '../models/User.js';
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import type { AuthenticatedRequest } from '../middleware/auth.js';
 
-export const authValidationRules = () => [
-  body('username').notEmpty().trim().toLowerCase(),
-  body('email').optional().isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('firstName').notEmpty().trim(),
-  body('lastName').notEmpty().trim(),
-];
-
-export const loginValidationRules = () => [
-  body('username').notEmpty().trim().toLowerCase(),
-  body('password').notEmpty(),
-];
+const sanitizeUser = (user: any) => ({
+  id: user._id.toString(),
+  username: user.username,
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  fullName: `${user.firstName} ${user.lastName}`,
+  role: user.role,
+  avatar: user.avatar,
+  isActive: user.isActive,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
 
 export class AuthController {
-  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async register(req: Request, res: Response): Promise<void> {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, message: errors.array()[0].msg });
+      return;
+    }
+
     try {
       const { username, email, password, firstName, lastName } = req.body;
 
-      const result = await AuthService.register({
-        username,
-        email,
-        password,
+      const existing = await User.findOne({ $or: [{ username: username.toLowerCase() }, { email: email.toLowerCase() }] });
+      if (existing) {
+        res.status(409).json({ success: false, message: 'Username or email already exists' });
+        return;
+      }
+
+      const user = await User.create({
+        username: username.toLowerCase(),
+        email: email.toLowerCase(),
+        passwordHash: password,
         firstName,
         lastName,
+        role: 'user',
       });
+
+      const token = generateAccessToken({
+        sub: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      });
+
+      const refreshToken = generateRefreshToken({ sub: user._id.toString() });
 
       res.status(201).json({
-        message: 'User registered successfully',
-        data: result,
+        success: true,
+        data: { user: sanitizeUser(user), token, refreshToken },
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || 'Registration failed' });
     }
   }
 
-  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { username, password } = req.body;
-
-      console.log('🔐 Login attempt for username:', username);
-
-      const result = await AuthService.login({
-        username,
-        password,
-      });
-
-      console.log('✅ Login successful for username:', username);
-
-      res.status(200).json({
-        message: 'Login successful',
-        data: result,
-      });
-    } catch (error) {
-      console.error('❌ Login error:', error instanceof Error ? error.message : error);
-      next(error);
+  async login(req: Request, res: Response): Promise<void> {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, message: errors.array()[0].msg });
+      return;
     }
-  }
 
-  async adminLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { username, password } = req.body;
+      const { usernameOrEmail, password } = req.body;
 
-      console.log('🔐 Admin login attempt for username:', username);
-
-      const result = await AuthService.adminLogin({
-        username,
-        password,
-      });
-
-      console.log('✅ Admin login successful for username:', username);
-
-      res.status(200).json({
-        message: 'Admin login successful',
-        data: result,
-      });
-    } catch (error) {
-      console.error('❌ Admin login error:', error instanceof Error ? error.message : error);
-      next(error);
-    }
-  }
-
-  async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      if (!req.user) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const user = await AuthService.getUserById(req.user.id);
-
-      res.status(200).json({
-        data: user,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getMe(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      if (!req.user) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const user = await AuthService.getUserById(req.user.id);
+      const user = await User.findOne({
+        $or: [
+          { username: usernameOrEmail.toLowerCase() },
+          { email: usernameOrEmail.toLowerCase() },
+        ],
+      }).select('+passwordHash');
 
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
         return;
       }
 
-      res.status(200).json({
-        token: req.headers.authorization?.split(' ')[1],
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          isActive: user.isActive,
-          avatar: user.avatar,
-        },
+      const valid = await user.comparePassword(password);
+      if (!valid) {
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
+        return;
+      }
+
+      if (!user.isActive) {
+        res.status(403).json({ success: false, message: 'Account is deactivated. Contact an administrator.' });
+        return;
+      }
+
+      user.lastLogin = new Date();
+      await user.save();
+
+      const token = generateAccessToken({
+        sub: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        role: user.role,
       });
-    } catch (error) {
-      next(error);
+
+      const refreshToken = generateRefreshToken({ sub: user._id.toString() });
+
+      res.json({
+        success: true,
+        data: { user: sanitizeUser(user), token, refreshToken },
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || 'Login failed' });
     }
   }
 
-  async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async adminLogin(req: Request, res: Response): Promise<void> {
     try {
-      if (!req.user) {
-        res.status(401).json({ error: 'Unauthorized' });
+      const { usernameOrEmail, password } = req.body;
+
+      const user = await User.findOne({
+        $or: [
+          { username: usernameOrEmail.toLowerCase() },
+          { email: usernameOrEmail.toLowerCase() },
+        ],
+      }).select('+passwordHash');
+
+      if (!user) {
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
         return;
       }
 
-      const { firstName, lastName, avatar } = req.body;
+      if (user.role !== 'super_admin' && user.role !== 'admin') {
+        res.status(403).json({ success: false, message: 'Admin access required' });
+        return;
+      }
 
-      const user = await AuthService.updateUser(req.user.id, {
-        firstName,
-        lastName,
-        avatar,
+      const valid = await user.comparePassword(password);
+      if (!valid) {
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
+        return;
+      }
+
+      if (!user.isActive) {
+        res.status(403).json({ success: false, message: 'Account is deactivated' });
+        return;
+      }
+
+      user.lastLogin = new Date();
+      await user.save();
+
+      const token = generateAccessToken({
+        sub: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        role: user.role,
       });
 
-      res.status(200).json({
-        message: 'Profile updated successfully',
-        data: user,
+      const refreshToken = generateRefreshToken({ sub: user._id.toString() });
+
+      res.json({
+        success: true,
+        data: { user: sanitizeUser(user), token, refreshToken },
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || 'Login failed' });
+    }
+  }
+
+  async me(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const user = await User.findById(req.user!._id);
+      if (!user) {
+        res.status(404).json({ success: false, message: 'User not found' });
+        return;
+      }
+
+      res.json({ success: true, data: { user: sanitizeUser(user) } });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async refresh(req: Request, res: Response): Promise<void> {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        res.status(400).json({ success: false, message: 'Refresh token required' });
+        return;
+      }
+
+      const { verifyToken } = await import('../utils/jwt.js');
+      const decoded = verifyToken(refreshToken);
+      const user = await User.findById(decoded.sub);
+
+      if (!user || !user.isActive) {
+        res.status(401).json({ success: false, message: 'Invalid refresh token' });
+        return;
+      }
+
+      const token = generateAccessToken({
+        sub: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      });
+
+      const newRefreshToken = generateRefreshToken({ sub: user._id.toString() });
+
+      res.json({ success: true, data: { token, refreshToken: newRefreshToken } });
+    } catch {
+      res.status(401).json({ success: false, message: 'Invalid refresh token' });
+    }
+  }
+
+  async changePassword(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword || newPassword.length < 8) {
+        res.status(400).json({ success: false, message: 'Current password and new password (min 8 chars) required' });
+        return;
+      }
+
+      const user = await User.findById(req.user!._id).select('+passwordHash');
+      if (!user) {
+        res.status(404).json({ success: false, message: 'User not found' });
+        return;
+      }
+
+      const valid = await user.comparePassword(currentPassword);
+      if (!valid) {
+        res.status(401).json({ success: false, message: 'Current password is incorrect' });
+        return;
+      }
+
+      user.passwordHash = newPassword;
+      await user.save();
+
+      res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 }

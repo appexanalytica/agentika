@@ -1,52 +1,17 @@
 import { Router } from 'express';
-import AuthController, {
-  authValidationRules,
-  loginValidationRules,
-} from '../controllers/AuthController';
-import { validationErrorHandler } from '../middleware/errorHandler';
-import { authMiddleware, adminMiddleware } from '../middleware/auth';
+import AuthController from '../controllers/AuthController.js';
+import { authenticate } from '../middleware/auth.js';
+import { loginRateLimit } from '../middleware/rateLimit.js';
+import { validateRegister, validateLogin } from '../utils/validation.js';
+import type { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
-// Public routes
-router.post(
-  '/register',
-  authValidationRules(),
-  validationErrorHandler,
-  (req, res, next) => AuthController.register(req, res, next)
-);
-
-router.post(
-  '/login',
-  loginValidationRules(),
-  validationErrorHandler,
-  (req, res, next) => AuthController.login(req, res, next)
-);
-
-// Admin-only login endpoint
-router.post(
-  '/admin/login',
-  loginValidationRules(),
-  validationErrorHandler,
-  (req, res, next) => AuthController.adminLogin(req, res, next)
-);
-
-// Protected routes
-router.get('/me', authMiddleware, (req, res, next) =>
-  AuthController.getMe(req, res, next)
-);
-
-router.get('/profile', authMiddleware, (req, res, next) =>
-  AuthController.getProfile(req, res, next)
-);
-
-router.put('/profile', authMiddleware, (req, res, next) =>
-  AuthController.updateProfile(req, res, next)
-);
-
-// Admin-only routes
-router.get('/admin/me', authMiddleware, adminMiddleware, (req, res, next) =>
-  AuthController.getProfile(req, res, next)
-);
+router.post('/register', validateRegister, AuthController.register);
+router.post('/login', loginRateLimit, validateLogin, AuthController.login);
+router.post('/admin/login', loginRateLimit, validateLogin, AuthController.adminLogin);
+router.post('/refresh', AuthController.refresh);
+router.get('/me', authenticate, (req, res) => AuthController.me(req as AuthenticatedRequest, res));
+router.post('/change-password', authenticate, (req, res) => AuthController.changePassword(req as AuthenticatedRequest, res));
 
 export default router;

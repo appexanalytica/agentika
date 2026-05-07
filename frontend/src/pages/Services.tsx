@@ -4,39 +4,39 @@ const Services = () => {
   const services = [
     {
       number: "01",
-      title: "PRODUCTOS DIGITALES",
-      description: "Construimos software a medida que resuelve problemas reales — aplicaciones, plataformas y sistemas diseñados para durar y crecer con tu negocio."
+      title: "RESIDENTIAL",
+      description: "Crafting homes that reflect individual lifestyles while maintaining architectural integrity"
     },
     {
-      number: "02",
-      title: "AGENTES DE INTELIGENCIA ARTIFICIAL",
-      description: "Diseñamos agentes autónomos que trabajan junto a tu equipo: aprenden, deciden y actúan — para que las personas se enfoquen en lo que solo ellas pueden hacer."
+      number: "02", 
+      title: "COMMERCIAL",
+      description: "Designing functional spaces that enhance business environments and user experiences"
     },
     {
       number: "03",
-      title: "INTEGRACIÓN & AUTOMATIZACIÓN",
-      description: "Conectamos tus sistemas existentes con inteligencia artificial aplicada, transformando flujos de trabajo manuales en procesos que se mueven solos."
+      title: "RENOVATION",
+      description: "Transforming existing structures with contemporary sensibilities and sustainable practices"
     },
     {
       number: "04",
-      title: "CONSULTORÍA ESTRATÉGICA",
-      description: "Acompañamos a organizaciones que quieren incorporar IA con claridad: sin promesas vacías, con un camino concreto y criterio humano en cada paso."
+      title: "CONSULTATION",
+      description: "Providing expert guidance on design direction, planning, and architectural solutions"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
-      <section className="pt-32 pb-32">
+      <section className="pt-32 pb-32 bg-background">
         <div className="container mx-auto px-6">
           <div className="max-w-7xl mx-auto">
             <div className="mb-20">
-              <h1 className="text-minimal text-muted-foreground mb-4">SERVICIOS</h1>
+              <h1 className="text-minimal text-muted-foreground mb-4">SERVICES</h1>
               <h2 className="text-4xl md:text-6xl font-light text-architectural">
-                Lo Que Hacemos
+                What We Do
               </h2>
             </div>
-
+            
             <div className="grid md:grid-cols-2 gap-x-20 gap-y-16">
               {services.map((service, index) => (
                 <div key={index} className="group">

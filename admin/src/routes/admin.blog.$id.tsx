@@ -2,9 +2,9 @@ import { createFileRoute, useNavigate, useParams, Link } from "@tanstack/react-r
 import { useMemo, useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft, Save, Eye, Send, Image as ImageIcon, Bold, Italic, Link2, List, Heading1, Heading2, Code, Quote, Loader } from "lucide-react";
-import { blogAPI, type BlogPost } from "@/hooks/useAPI";
+import { ArrowLeft, Save, Eye, Send, Image as ImageIcon, Bold, Italic, Link2, List, Heading1, Heading2, Code, Quote } from "lucide-react";
 import { useStore, store } from "@/lib/store";
+import type { BlogPost, PostStatus } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/admin/blog/$id")({
   head: () => ({ meta: [{ title: "Editor | AGENTIKA Admin" }] }),
@@ -17,68 +17,45 @@ export const Route = createFileRoute("/admin/blog/$id")({
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-const defaultPost = (): Omit<BlogPost, '_id' | 'author' | 'views' | 'likes' | 'createdAt' | 'updatedAt'> & { id?: string } => ({
-  title: "",
-  slug: "",
-  excerpt: "",
-  content: "# Nuevo artículo\n\nEmpieza a escribir aquí...",
-  status: "published",
-  category: "General",
-  tags: [],
-  thumbnail: undefined,
-  cover: undefined,
-  seoTitle: "",
-  seoDescription: "",
-  readTime: "5 min read",
-});
-
 export function BlogEditor({ postId, newPost }: { postId?: string; newPost?: boolean }) {
   const navigate = useNavigate();
+  const posts = useStore((s) => s.posts);
+
   const isNew = newPost || postId === "new" || !postId;
-  
-  const [post, setPost] = useState<any>(defaultPost());
+  const existing = useMemo(() => (isNew ? undefined : posts.find((p) => p.id === postId)), [posts, postId, isNew]);
+
+  const [post, setPost] = useState<BlogPost>(() =>
+    existing ?? {
+      id: crypto.randomUUID(),
+      title: "",
+      slug: "",
+      excerpt: "",
+      content: "# Nuevo artículo\n\nEmpieza a escribir aquí...",
+      status: "borrador",
+      category: "General",
+      tags: [],
+      author: "AGENTIKA Team",
+      seoTitle: "",
+      seoDescription: "",
+      updatedAt: new Date().toISOString(),
+      views: 0,
+    }
+  );
   const [tagInput, setTagInput] = useState("");
   const [tab, setTab] = useState<"editor" | "preview" | "split">("split");
-  const [loading, setLoading] = useState(!isNew);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
-    if (!isNew && postId) {
-      loadPost(postId);
-    }
-  }, [isNew, postId]);
+    if (!isNew && existing) setPost(existing);
+  }, [existing, isNew]);
 
-  const loadPost = async (id: string) => {
-    try {
-      setLoading(true);
-      const data = await blogAPI.getPost(id);
-      setPost({
-        ...data,
-        id: data._id,
-      });
-    } catch (err) {
-      setError("Error al cargar el artículo");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const update = <K extends keyof typeof post>(k: K, v: (typeof post)[K]) => {
-    setPost((p: any) => ({ ...p, [k]: v }));
-  };
+  const update = <K extends keyof BlogPost>(k: K, v: BlogPost[K]) => setPost((p) => ({ ...p, [k]: v }));
 
   const onTitleChange = (title: string) => {
-    setPost((p: any) => ({ 
-      ...p, 
-      title, 
-      slug: !p.slug || p.slug === slugify(p.title) ? slugify(title) : p.slug 
-    }));
+    setPost((p) => ({ ...p, title, slug: !p.slug || p.slug === slugify(p.title) ? slugify(title) : p.slug }));
   };
 
   const insertMd = (before: string, after = "") => {
+    if (typeof document === "undefined") return;
     const ta = document.getElementById("md-textarea") as HTMLTextAreaElement | null;
     if (!ta) return;
     const start = ta.selectionStart, end = ta.selectionEnd;
@@ -88,104 +65,26 @@ export function BlogEditor({ postId, newPost }: { postId?: string; newPost?: boo
     setTimeout(() => { ta.focus(); ta.selectionEnd = start + before.length + sel.length; }, 0);
   };
 
-  const save = async (newStatus?: 'draft' | 'published' | 'archived') => {
-    try {
-      setSaving(true);
-      setError(null);
-
-      const payload = {
-        title: post.title.trim(),
-        slug: post.slug || slugify(post.title),
-        content: post.content,
-        excerpt: post.excerpt || post.content.substring(0, 200) + '...',
-        thumbnail: post.thumbnail,
-        cover: post.cover,
-        tags: post.tags || [],
-        category: post.category || 'General',
-        seoTitle: post.seoTitle,
-        seoDescription: post.seoDescription,
-        readTime: post.readTime || '5 min read',
-        status: newStatus ?? post.status,
-      };
-
-      if (isNew) {
-        await blogAPI.createPost(payload);
-      } else {
-        await blogAPI.updatePost(post.id || post._id, payload);
-      }
-
-      // Sincronizar con store local también
-      store.upsertPost({
-        id: post.id || post._id || crypto.randomUUID(),
-        title: post.title,
-        slug: post.slug,
-        excerpt: post.excerpt,
-        content: post.content,
-        status: (newStatus ?? post.status) as any,
-        category: post.category,
-        tags: post.tags,
-        author: post.author || "AGENTIKA Team",
-        seoTitle: post.seoTitle,
-        seoDescription: post.seoDescription,
-        publishedAt: post.publishedAt,
-        updatedAt: new Date().toISOString(),
-        views: post.views || 0,
-        cover: post.cover,
-      });
-
-      navigate({ to: "/admin/blog" });
-    } catch (err) {
-      setError("Error al guardar el artículo");
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
+  const save = (newStatus?: PostStatus) => {
+    const updated: BlogPost = {
+      ...post,
+      status: newStatus ?? post.status,
+      slug: post.slug || slugify(post.title),
+      updatedAt: new Date().toISOString(),
+      publishedAt: (newStatus === "publicado" || post.status === "publicado") ? (post.publishedAt ?? new Date().toISOString()) : post.publishedAt,
+    };
+    store.upsertPost(updated);
+    navigate({ to: "/admin/blog" });
   };
 
   const addTag = () => {
     const t = tagInput.trim();
-    if (t && !post.tags.includes(t)) {
-      update("tags", [...post.tags, t]);
-    }
+    if (t && !post.tags.includes(t)) update("tags", [...post.tags, t]);
     setTagInput("");
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.currentTarget.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploadingImage(true);
-      const { presignedUrl } = await blogAPI.uploadImage(file);
-      update("cover", presignedUrl);
-    } catch (err) {
-      setError("Error al subir la imagen");
-      console.error(err);
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader className="size-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Cargando artículo...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Error banner */}
-      {error && (
-        <div className="bg-destructive/10 border-b border-destructive/20 text-destructive px-8 py-3">
-          {error}
-        </div>
-      )}
-
       {/* Editor topbar */}
       <div className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-border">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 px-8 py-3">
@@ -206,21 +105,11 @@ export function BlogEditor({ postId, newPost }: { postId?: string; newPost?: boo
                 </button>
               ))}
             </div>
-            <button 
-              onClick={() => save("draft")} 
-              disabled={saving}
-              className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground px-3 py-2 rounded-lg text-xs font-semibold hover:bg-muted transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? <Loader className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-              Guardar borrador
+            <button onClick={() => save("borrador")} className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground px-3 py-2 rounded-lg text-xs font-semibold hover:bg-muted transition">
+              <Save className="size-3.5" /> Guardar borrador
             </button>
-            <button 
-              onClick={() => save("published")}
-              disabled={saving}
-              className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-semibold hover:bg-primary-glow transition glow-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? <Loader className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
-              Publicar
+            <button onClick={() => save("publicado")} className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-semibold hover:bg-primary-glow transition glow-primary">
+              <Send className="size-3.5" /> Publicar
             </button>
           </div>
         </div>
@@ -250,7 +139,7 @@ export function BlogEditor({ postId, newPost }: { postId?: string; newPost?: boo
               { i: <Bold className="size-4" />,     fn: () => insertMd("**", "**") },
               { i: <Italic className="size-4" />,   fn: () => insertMd("*", "*") },
               { i: <Link2 className="size-4" />,    fn: () => insertMd("[", "](url)") },
-              { i: <ImageIcon className="size-4" />,fn: () => document.getElementById("image-upload")?.click() },
+              { i: <ImageIcon className="size-4" />,fn: () => insertMd("![alt](", ")") },
               { i: <List className="size-4" />,     fn: () => insertMd("- ") },
               { i: <Code className="size-4" />,     fn: () => insertMd("`", "`") },
               { i: <Quote className="size-4" />,    fn: () => insertMd("> ") },
@@ -296,7 +185,7 @@ export function BlogEditor({ postId, newPost }: { postId?: string; newPost?: boo
 
           <Section title="Categoría">
             <select
-              value={post.category || "General"} onChange={(e) => update("category", e.target.value)}
+              value={post.category} onChange={(e) => update("category", e.target.value)}
               className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               {["General", "Casos de uso", "Estrategia", "Tendencias", "Tutoriales", "Producto"].map((c) => (
@@ -307,10 +196,10 @@ export function BlogEditor({ postId, newPost }: { postId?: string; newPost?: boo
 
           <Section title="Tags">
             <div className="flex gap-1 flex-wrap mb-2">
-              {(post.tags || []).map((t: string) => (
+              {post.tags.map((t) => (
                 <span key={t} className="inline-flex items-center gap-1 bg-muted px-2 py-0.5 rounded text-xs">
                   {t}
-                  <button onClick={() => update("tags", (post.tags || []).filter((x: string) => x !== t))} className="text-muted-foreground hover:text-destructive">×</button>
+                  <button onClick={() => update("tags", post.tags.filter((x) => x !== t))} className="text-muted-foreground hover:text-destructive">×</button>
                 </span>
               ))}
             </div>
@@ -325,41 +214,29 @@ export function BlogEditor({ postId, newPost }: { postId?: string; newPost?: boo
             </div>
           </Section>
 
-          <Section title="Imagen de portada">
+          <Section title="Imagen de portada (URL)">
             <input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={uploadingImage}
-              className="hidden"
+              value={post.cover ?? ""} onChange={(e) => update("cover", e.target.value)}
+              placeholder="https://…"
+              className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
-            <div className="space-y-2">
-              <button
-                onClick={() => document.getElementById("image-upload")?.click()}
-                disabled={uploadingImage}
-                className="w-full py-2 px-3 bg-input border border-border rounded-lg text-sm hover:bg-muted transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {uploadingImage ? "Subiendo..." : "Subir imagen a MinIO"}
-              </button>
-              {post.cover && <img src={post.cover} alt="cover" className="rounded-lg w-full aspect-video object-cover border border-border" />}
-            </div>
+            {post.cover && <img src={post.cover} alt="cover" className="mt-2 rounded-lg w-full aspect-video object-cover border border-border" />}
           </Section>
 
           <Section title="SEO">
             <input
-              value={post.seoTitle || ""} onChange={(e) => update("seoTitle", e.target.value)}
+              value={post.seoTitle ?? ""} onChange={(e) => update("seoTitle", e.target.value)}
               placeholder="Title SEO (≤60)" maxLength={70}
               className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 mb-2"
             />
             <textarea
-              value={post.seoDescription || ""} onChange={(e) => update("seoDescription", e.target.value)}
+              value={post.seoDescription ?? ""} onChange={(e) => update("seoDescription", e.target.value)}
               placeholder="Meta description (≤160)" rows={3} maxLength={170}
               className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-              <span>{(post.seoTitle || "").length}/60</span>
-              <span>{(post.seoDescription || "").length}/160</span>
+              <span>{(post.seoTitle ?? "").length}/60</span>
+              <span>{(post.seoDescription ?? "").length}/160</span>
             </div>
           </Section>
         </aside>

@@ -1,18 +1,9 @@
 import mongoose from 'mongoose';
 
 const connectDB = async (): Promise<void> => {
-  try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/agentika';
-    
-    await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    
-    console.log('✅ MongoDB connected successfully');
-  } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
-    process.exit(1);
-  }
+  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/agentika';
+  await mongoose.connect(uri);
+  console.log('MongoDB connected');
 };
 
 export default connectDB;

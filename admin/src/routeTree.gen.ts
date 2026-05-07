@@ -16,13 +16,12 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTasksRouteImport } from './routes/admin.tasks'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminPipelineRouteImport } from './routes/admin.pipeline'
-import { Route as AdminMailRouteImport } from './routes/admin.mail'
 import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
 import { Route as AdminEmailsRouteImport } from './routes/admin.emails'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
-import { Route as AdminProjectsSlugRouteImport } from './routes/admin.projects.$slug'
 import { Route as AdminBlogNewRouteImport } from './routes/admin.blog.new'
 import { Route as AdminBlogIdRouteImport } from './routes/admin.blog.$id'
 
@@ -61,14 +60,14 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminProfileRoute = AdminProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPipelineRoute = AdminPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminMailRoute = AdminMailRouteImport.update({
-  id: '/mail',
-  path: '/mail',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLeadsRoute = AdminLeadsRouteImport.update({
@@ -91,11 +90,6 @@ const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   path: '/blog/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminProjectsSlugRoute = AdminProjectsSlugRouteImport.update({
-  id: '/projects/$slug',
-  path: '/projects/$slug',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminBlogNewRoute = AdminBlogNewRouteImport.update({
   id: '/blog/new',
   path: '/blog/new',
@@ -114,15 +108,14 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/leads': typeof AdminLeadsRoute
-  '/admin/mail': typeof AdminMailRoute
   '/admin/pipeline': typeof AdminPipelineRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tasks': typeof AdminTasksRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/projects/$slug': typeof AdminProjectsSlugRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
 }
 export interface FileRoutesByTo {
@@ -131,15 +124,14 @@ export interface FileRoutesByTo {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/leads': typeof AdminLeadsRoute
-  '/admin/mail': typeof AdminMailRoute
   '/admin/pipeline': typeof AdminPipelineRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tasks': typeof AdminTasksRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/projects/$slug': typeof AdminProjectsSlugRoute
   '/admin/blog': typeof AdminBlogIndexRoute
 }
 export interface FileRoutesById {
@@ -150,15 +142,14 @@ export interface FileRoutesById {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/emails': typeof AdminEmailsRoute
   '/admin/leads': typeof AdminLeadsRoute
-  '/admin/mail': typeof AdminMailRoute
   '/admin/pipeline': typeof AdminPipelineRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tasks': typeof AdminTasksRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/projects/$slug': typeof AdminProjectsSlugRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
 }
 export interface FileRouteTypes {
@@ -170,15 +161,14 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/emails'
     | '/admin/leads'
-    | '/admin/mail'
     | '/admin/pipeline'
+    | '/admin/profile'
     | '/admin/settings'
     | '/admin/tasks'
     | '/admin/users'
     | '/admin/'
     | '/admin/blog/$id'
     | '/admin/blog/new'
-    | '/admin/projects/$slug'
     | '/admin/blog/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -187,15 +177,14 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/emails'
     | '/admin/leads'
-    | '/admin/mail'
     | '/admin/pipeline'
+    | '/admin/profile'
     | '/admin/settings'
     | '/admin/tasks'
     | '/admin/users'
     | '/admin'
     | '/admin/blog/$id'
     | '/admin/blog/new'
-    | '/admin/projects/$slug'
     | '/admin/blog'
   id:
     | '__root__'
@@ -205,15 +194,14 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/emails'
     | '/admin/leads'
-    | '/admin/mail'
     | '/admin/pipeline'
+    | '/admin/profile'
     | '/admin/settings'
     | '/admin/tasks'
     | '/admin/users'
     | '/admin/'
     | '/admin/blog/$id'
     | '/admin/blog/new'
-    | '/admin/projects/$slug'
     | '/admin/blog/'
   fileRoutesById: FileRoutesById
 }
@@ -274,18 +262,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/profile': {
+      id: '/admin/profile'
+      path: '/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AdminProfileRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/pipeline': {
       id: '/admin/pipeline'
       path: '/pipeline'
       fullPath: '/admin/pipeline'
       preLoaderRoute: typeof AdminPipelineRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/mail': {
-      id: '/admin/mail'
-      path: '/mail'
-      fullPath: '/admin/mail'
-      preLoaderRoute: typeof AdminMailRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/leads': {
@@ -316,13 +304,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/projects/$slug': {
-      id: '/admin/projects/$slug'
-      path: '/projects/$slug'
-      fullPath: '/admin/projects/$slug'
-      preLoaderRoute: typeof AdminProjectsSlugRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/blog/new': {
       id: '/admin/blog/new'
       path: '/blog/new'
@@ -344,15 +325,14 @@ interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminEmailsRoute: typeof AdminEmailsRoute
   AdminLeadsRoute: typeof AdminLeadsRoute
-  AdminMailRoute: typeof AdminMailRoute
   AdminPipelineRoute: typeof AdminPipelineRoute
+  AdminProfileRoute: typeof AdminProfileRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTasksRoute: typeof AdminTasksRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBlogIdRoute: typeof AdminBlogIdRoute
   AdminBlogNewRoute: typeof AdminBlogNewRoute
-  AdminProjectsSlugRoute: typeof AdminProjectsSlugRoute
   AdminBlogIndexRoute: typeof AdminBlogIndexRoute
 }
 
@@ -360,15 +340,14 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminEmailsRoute: AdminEmailsRoute,
   AdminLeadsRoute: AdminLeadsRoute,
-  AdminMailRoute: AdminMailRoute,
   AdminPipelineRoute: AdminPipelineRoute,
+  AdminProfileRoute: AdminProfileRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTasksRoute: AdminTasksRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminBlogIdRoute: AdminBlogIdRoute,
   AdminBlogNewRoute: AdminBlogNewRoute,
-  AdminProjectsSlugRoute: AdminProjectsSlugRoute,
   AdminBlogIndexRoute: AdminBlogIndexRoute,
 }
 
@@ -382,3 +361,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
