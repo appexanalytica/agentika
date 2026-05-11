@@ -38,28 +38,25 @@ const Portfolio = () => {
             </h3>
           </div>
 
-          <div className="space-y-20">
+          <div className="grid gap-10 md:grid-cols-3">
             {pillars.map((pillar, index) => (
-              <div
-                key={index}
-                className="pb-20 border-b border-border last:border-b-0 last:pb-0"
-              >
-                <div className="mb-6">
-                  <span className="text-minimal text-muted-foreground">
+              <div key={index} className="space-y-6">
+                <div>
+                  <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">
                     {pillar.number}
                   </span>
                 </div>
                 <div>
-                  <h4 className="text-2xl md:text-3xl font-semibold text-white mb-6">
+                  <h4 className="text-3xl md:text-4xl font-semibold text-white mb-6">
                     {pillar.title}
                   </h4>
                   {pillar.image && (
-                    <div className="mb-8 overflow-hidden rounded-sm">
+                    <div className="mb-8 overflow-hidden rounded-[28px] aspect-[9/16]">
                       <img
                         src={pillar.image}
                         alt={pillar.title}
                         loading="lazy"
-                        className="w-full h-auto object-cover"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                   )}
