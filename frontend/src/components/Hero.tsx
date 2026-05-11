@@ -48,7 +48,7 @@ const Hero = () => {
         >
           AGENTIKA
         </h1>
-        <p className="font-montserrat-alt text-base leading-8 text-[#dccdffcc] tracking-wide max-w-2xl mx-auto reveal-delayed transition-opacity duration-700 ease-out" style={{ opacity: mounted ? 1 : 0, transform: mounted ? "none" : "translateY(18px)" }}>
+        <p className="font-montserrat-alt text-base leading-8 text-muted-foreground tracking-wide max-w-2xl mx-auto reveal-delayed transition-opacity duration-700 ease-out" style={{ opacity: mounted ? 1 : 0, transform: mounted ? "none" : "translateY(18px)" }}>
           Software Factory
         </p>
       </div>

@@ -231,25 +231,25 @@ const About = () => {
             <div className="absolute bottom-[-30px] left-[10px] w-[200px] h-[200px] rounded-full border border-white/5 pointer-events-none" />
 
             <div className="relative z-10 grid md:grid-cols-2 min-h-[520px]">
-              <div className="p-10 md:p-16 border-r border-white/10 flex flex-col gap-6">
+              <div className="p-10 md:p-16 border-r border-border dark:border-white/10 flex flex-col gap-6">
                 <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">Nuestra Filosofía</span>
-                <h2 className="text-5xl md:text-6xl font-semibold leading-tight text-white">
-                  Diseño con <span className="italic text-[#c4b5fd]">propósito</span>
+                <h2 className="text-5xl md:text-6xl font-semibold leading-tight text-foreground">
+                  Diseño con <span className="italic text-[#4338ca] dark:text-[#c4b5fd]">propósito</span>
                 </h2>
-                <p className="max-w-xl text-base leading-8 text-[#dccdffcc]">
+                <p className="max-w-xl text-base leading-8 text-muted-foreground">
                   No buscamos adornos por sí mismos. Creamos productos digitales que conectan con las necesidades reales de usuarios, procesos y equipos, sin perder la claridad de cada decisión.
                 </p>
-                <p className="max-w-xl text-sm text-[#c8bee6bf] leading-7">
+                <p className="max-w-xl text-sm text-muted-foreground leading-7">
                   Cada proyecto nace de un problema concreto y termina con una experiencia simplificada, coherente y escalable.
                 </p>
                 <div className="mt-auto flex gap-10">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.22em] text-[#b4a0ff]/65 mb-2">{cards[activeIndex].statLabel}</p>
-                    <p className="text-4xl font-semibold text-[#c4b5fd]">{displayValue}</p>
+                    <p className="text-4xl font-semibold text-[#4338ca] dark:text-[#c4b5fd]">{displayValue}</p>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.22em] text-[#b4a0ff]/65 mb-2">Clientes</p>
-                    <p className="text-4xl font-semibold text-[#c4b5fd]">120+</p>
+                    <p className="text-4xl font-semibold text-[#4338ca] dark:text-[#c4b5fd]">120+</p>
                   </div>
                 </div>
               </div>
@@ -267,20 +267,20 @@ const About = () => {
                           onClick={() => setActiveIndex(index)}
                           className={`w-full text-left rounded-xl border px-5 py-4 transition-all duration-300 ${
                             isActive
-                              ? "bg-white/5 border-[#c4b5fd]/30 shadow-[0_0_25px_rgba(196,181,253,0.06)]"
-                              : "border-white/10 hover:border-[#b4a0ff]/30"
+                              ? "bg-slate-100/70 dark:bg-white/5 border-border dark:border-[#c4b5fd]/30 shadow-[0_0_25px_rgba(196,181,253,0.06)]"
+                              : "border-border dark:border-white/10 hover:border-[#b4a0ff]/30"
                           }`}
                         >
                           <div className="flex items-center gap-4">
-                            <span className={`block h-2.5 w-2.5 rounded-full transition-all ${isActive ? "bg-[#c4b5fd] shadow-[0_0_10px_rgba(196,181,253,0.45)]" : "bg-[#b4a0ff]/30"}`} />
-                            <span className={`text-base font-medium transition-colors ${isActive ? "text-white" : "text-[#e6dcffcc]"}`}>
+                            <span className={`block h-2.5 w-2.5 rounded-full transition-all ${isActive ? "bg-[#4338ca] dark:bg-[#c4b5fd] shadow-[0_0_10px_rgba(196,181,253,0.45)]" : "bg-[#b4a0ff]/30"}`} />
+                            <span className={`text-base font-medium transition-colors ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
                               {card.title}
                             </span>
-                            <span className={`ml-auto text-2xl transition-transform ${isActive ? "text-[#c4b5fd] rotate-90" : "text-[#b4a0ff]/50"}`}>
+                            <span className={`ml-auto text-2xl transition-transform ${isActive ? "text-[#4338ca] dark:text-[#c4b5fd] rotate-90" : "text-[#5b7bff]/60 dark:text-[#b4a0ff]/50"}`}>
                               ›
                             </span>
                           </div>
-                          <p className={`mt-4 text-sm leading-7 transition-all ${isActive ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`} style={{ color: isActive ? "rgba(200,190,230,0.85)" : "rgba(200,190,230,0)" }}>
+                          <p className={`mt-4 text-sm leading-7 text-muted-foreground transition-all ${isActive ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
                             {card.body}
                           </p>
                         </button>

@@ -1022,7 +1022,7 @@ const Services = () => {
         <div className="max-w-7xl mx-auto">
           <div className="mb-20">
             <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">SERVICIOS</span>
-            <h3 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4">
+            <h3 className="text-5xl md:text-6xl font-semibold leading-tight text-foreground mt-4">
               Lo Que Hacemos
             </h3>
           </div>
@@ -1044,10 +1044,10 @@ const Services = () => {
                   <span className="text-[10px] uppercase tracking-[0.22em] text-[#b4a0ff]/65 mb-3 block">
                     {service.number}
                   </span>
-                  <h4 className="text-2xl md:text-3xl font-semibold mb-4 text-white">
+                  <h4 className="text-2xl md:text-3xl font-semibold mb-4 text-foreground">
                     {service.title}
                   </h4>
-                  <p className="text-base leading-8 text-[#dccdffcc]">
+                  <p className="text-base leading-8 text-muted-foreground">
                     {service.description}
                   </p>
                 </div>
