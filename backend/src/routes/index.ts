@@ -1,14 +1,22 @@
 import { Router } from 'express';
 import authRoutes from './auth.js';
 import userRoutes from './users.js';
-import stubRoutes from './stubs.js';
+import leadRoutes from './leads.js';
+import blogRoutes from './blog.js';
+import mediaRoutes from './media.js';
+import publicRoutes from './public.js';
+import analyticsRoutes from './analytics.js';
+import ogRoutes from './og.js';
 
-export const apiRouter = Router();
+const router = Router();
 
-apiRouter.get('/', (_req, res) => {
-  res.json({ message: 'Agentika API' });
-});
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/leads', leadRoutes);
+router.use('/blog', blogRoutes);
+router.use('/media', mediaRoutes);
+router.use('/public', publicRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/og', ogRoutes);
 
-apiRouter.use('/auth', authRoutes);
-apiRouter.use('/users', userRoutes);
-apiRouter.use('/', stubRoutes);
+export default router;

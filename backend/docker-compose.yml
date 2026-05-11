@@ -39,7 +39,7 @@ services:
       MINIO_PORT: 9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      JWT_SECRET: your-secret-key-here
+      JWT_SECRET: your-secret-key-here-change-in-production
     ports:
       - '5000:5000'
     depends_on:

@@ -1,91 +1,138 @@
 import express from 'express';
-import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
-import { errorHandler } from './middleware/errorHandler.js';
-import { apiRouter } from './routes/index.js';
+import cors from 'cors';
+import morgan from 'morgan';
 import connectDB from './config/database.js';
+import initializeMinIO from './config/minio.js';
+import config from './config/env.js';
+import apiRoutes from './routes/index.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { apiRateLimit } from './middleware/rateLimit.js';
 import User from './models/User.js';
-
-dotenv.config();
+import { hashPassword } from './utils/password.js';
+import Setting from './models/Setting.js';
+import Pipeline from './models/Pipeline.js';
+import PipelineStage from './models/PipelineStage.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
+// Security middleware
 app.use(helmet());
+
+// CORS
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowed = [
-      process.env.CORS_ORIGIN,
-      'http://localhost:8080',
-      'http://localhost:8081',
-      'http://127.0.0.1:8080',
-      'http://127.0.0.1:8081',
-    ].filter(Boolean);
-    if (!origin || allowed.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS blocked: ${origin}`));
-    }
-  },
+  origin: config.cors.origin,
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-app.use('/api', apiRouter);
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.get('/health', (_req, res) => {
+// Logging
+if (config.nodeEnv !== 'test') {
+  app.use(morgan('combined'));
+}
+
+// Rate limiting
+app.use('/api', apiRateLimit);
+
+// Health check
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// API routes
+app.use('/api', apiRoutes);
+
+// Error handling
 app.use(errorHandler);
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+// Seed super admin
 const seedSuperAdmin = async () => {
   try {
-    const username = process.env.SEED_ADMIN_USERNAME || 'admin';
-    const password = process.env.SEED_ADMIN_PASSWORD;
-    const email = process.env.SEED_ADMIN_EMAIL || 'admin@agentika.com';
-
-    if (!password) {
-      console.warn('SEED_ADMIN_PASSWORD not set, skipping super admin seed');
-      return;
+    const existingAdmin = await User.findOne({ username: config.seed.adminUsername });
+    if (!existingAdmin) {
+      await User.create({
+        username: config.seed.adminUsername,
+        email: config.seed.adminEmail,
+        passwordHash: await hashPassword(config.seed.adminPassword),
+        firstName: 'Super',
+        lastName: 'Admin',
+        role: 'super_admin',
+        isActive: true,
+      });
+      console.log('Super admin user created');
     }
-
-    const existing = await User.findOne({ username });
-    if (existing) {
-      if (existing.role !== 'super_admin') {
-        existing.role = 'super_admin';
-        await existing.save();
-        console.log('Existing admin promoted to super_admin');
-      } else {
-        console.log('Super admin already exists');
-      }
-      return;
-    }
-
-    await User.create({
-      username,
-      email,
-      passwordHash: password,
-      firstName: 'Super',
-      lastName: 'Admin',
-      role: 'super_admin',
-      isActive: true,
-    });
-
-    console.log(`Super admin "${username}" created successfully`);
   } catch (err) {
-    console.error('Failed to seed super admin:', err);
+    console.error('Error seeding super admin:', err);
   }
 };
 
-const start = async () => {
+// Seed initial data
+const seedInitialData = async () => {
   try {
+    // Seed settings
+    const existingSettings = await Setting.countDocuments();
+    if (existingSettings === 0) {
+      await Setting.create([
+        { key: 'site_name', value: 'AGENTIKA', group: 'general', isPublic: true },
+        { key: 'site_description', value: 'Creating extraordinary digital experiences', group: 'general', isPublic: true },
+        { key: 'contact_email', value: 'contact@agentika.com', group: 'contact', isPublic: true },
+        { key: 'contact_phone', value: '+1 (555) 123-4567', group: 'contact', isPublic: true },
+      ]);
+      console.log('Initial settings created');
+    }
+
+    // Seed default pipeline
+    const existingPipeline = await Pipeline.findOne({ isDefault: true });
+    if (!existingPipeline) {
+      const admin = await User.findOne({ role: 'super_admin' });
+      const pipeline = await Pipeline.create({
+        name: 'Default Sales Pipeline',
+        description: 'Standard sales process',
+        isDefault: true,
+        createdBy: admin?._id,
+      });
+
+      await PipelineStage.create([
+        { pipeline: pipeline._id, name: 'New', order: 1, probability: 10, color: '#3B82F6', isWon: false, isLost: false },
+        { pipeline: pipeline._id, name: 'Qualified', order: 2, probability: 25, color: '#10B981', isWon: false, isLost: false },
+        { pipeline: pipeline._id, name: 'Proposal', order: 3, probability: 50, color: '#F59E0B', isWon: false, isLost: false },
+        { pipeline: pipeline._id, name: 'Negotiation', order: 4, probability: 75, color: '#EF4444', isWon: false, isLost: false },
+        { pipeline: pipeline._id, name: 'Won', order: 5, probability: 100, color: '#22C55E', isWon: true, isLost: false },
+        { pipeline: pipeline._id, name: 'Lost', order: 6, probability: 0, color: '#6B7280', isWon: false, isLost: true },
+      ]);
+      console.log('Default pipeline created');
+    }
+  } catch (err) {
+    console.error('Error seeding initial data:', err);
+  }
+};
+
+// Start server
+const startServer = async () => {
+  try {
+    // Connect to database
     await connectDB();
+    console.log('MongoDB connected');
+
+    // Initialize MinIO
+    await initializeMinIO();
+    console.log('MinIO initialized');
+
+    // Seed data
     await seedSuperAdmin();
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    await seedInitialData();
+
+    // Start listening
+    app.listen(config.port, () => {
+      console.log(`Server running on port ${config.port} in ${config.nodeEnv} mode`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);
@@ -93,4 +140,6 @@ const start = async () => {
   }
 };
 
-start();
+startServer();
+
+export default app;

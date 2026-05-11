@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, type TokenPayload } from '../utils/jwt.js';
 import User, { type UserRole } from '../models/User.js';
-
-export interface AuthenticatedRequest extends Request {
-  user?: TokenPayload & { _id: string };
-}
+import type { AuthenticatedRequest } from '../types/index.js';
 
 export const authenticate = async (
   req: AuthenticatedRequest,

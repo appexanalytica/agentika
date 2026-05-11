@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;font-family:system-ui,sans-serif;padding:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;margin:0 auto}
+.card{position:relative;border-radius:16px;overflow:hidden;cursor:pointer;border:1px solid rgba(255,255,255,0.07);transition:border-color .4s,transform .4s;aspect-ratio:16/9}
+.card:hover{transform:translateY(-4px)}
+.card canvas{position:absolute;inset:0;width:100%;height:100%}
+.card-label{position:absolute;bottom:0;left:0;right:0;padding:16px 20px;background:linear-gradient(transparent,rgba(0,0,0,.7));z-index:10;pointer-events:none}
+.card-num{font-size:11px;font-weight:600;letter-spacing:.12em;opacity:.5;color:#fff;margin-bottom:4px}
+.card-title{font-size:15px;font-weight:500;color:#fff}
+</style>
+
+<div class="grid">
+  <div class="card" id="c1">
+    <canvas id="cv1"></canvas>
+    <div class="card-label"><div class="card-num">01</div><div class="card-title">Productos Digitales</div></div>
+  </div>
+  <div class="card" id="c2">
+    <canvas id="cv2"></canvas>
+    <div class="card-label"><div class="card-num">02</div><div class="card-title">Agentes de IA</div></div>
+  </div>
+  <div class="card" id="c3">
+    <canvas id="cv3"></canvas>
+    <div class="card-label"><div class="card-num">03</div><div class="card-title">Integración & Automatización</div></div>
+  </div>
+  <div class="card" id="c4">
+    <canvas id="cv4"></canvas>
+    <div class="card-label"><div class="card-num">04</div><div class="card-title">Consultoría Estratégica</div></div>
+  </div>
+</div>
+
+<script>
+// ─── UTILS ───────────────────────────────────────────────
+function setupCanvas(id){
+  const cv=document.getElementById(id);
+  const card=cv.parentElement;
+  cv.width=card.clientWidth*devicePixelRatio;
+  cv.height=card.clientHeight*devicePixelRatio;
+  const ctx=cv.getContext('2d');
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  return{ctx,w:card.clientWidth,h:card.clientHeight};
+}
+
+function lerp(a,b,t){return a+(b-a)*t}
+
+// ─── CARD 1: PRODUCTOS DIGITALES ─────────────────────────
+(function(){
+  let{ctx,w,h}=setupCanvas('cv1');
+  let mx=w/2,my=h/2,hov=false,t=0;
+  const card=document.getElementById('c1');
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    mx=e.clientX-r.left; my=e.clientY-r.top; hov=true;
+  });
+  card.addEventListener('mouseleave',()=>{hov=false});
+  card.style.borderColor='rgba(127,119,221,.3)';
+
+  const lines=[
+    {x:0.06,y:0.22,w:0.35,c:'#7F77DD'},
+    {x:0.06,y:0.32,w:0.25,c:'#534AB7'},
+    {x:0.06,y:0.40,w:0.30,c:'#534AB7'},
+    {x:0.06,y:0.52,w:0.22,c:'#7F77DD'},
+    {x:0.06,y:0.60,w:0.28,c:'#534AB7'},
+    {x:0.06,y:0.70,w:0.18,c:'#AFA9EC'},
+  ];
+
+  const dots=[
+    {x:0.52,y:0.20,r:3,c:'#97C459'},
+    {x:0.60,y:0.30,r:3,c:'#EF9F27'},
+    {x:0.68,y:0.22,r:3,c:'#534AB7'},
+    {x:0.75,y:0.35,r:3,c:'#F09595'},
+    {x:0.57,y:0.42,r:3,c:'#5DCAA5'},
+    {x:0.82,y:0.28,r:3,c:'#7F77DD'},
+  ];
+
+  function draw(){
+    t+=0.012;
+    ctx.clearRect(0,0,w,h);
+
+    // bg
+    ctx.fillStyle='#11102a';
+    ctx.roundRect(0,0,w,h,16);
+    ctx.fill();
+
+    // scanlines subtle
+    for(let y=0;y<h;y+=4){
+      ctx.fillStyle='rgba(0,0,0,0.08)';
+      ctx.fillRect(0,y,w,1);
+    }
+
+    // titlebar
+    ctx.fillStyle='#1a1840';
+    ctx.fillRect(0,0,w,28);
+    ['#F09595','#EF9F27','#97C459'].forEach((c,i)=>{
+      ctx.beginPath(); ctx.arc(14+i*18,14,5,0,Math.PI*2);
+      ctx.fillStyle=c; ctx.fill();
+    });
+
+    // animated cursor glow on hover
+    if(hov){
+      const g=ctx.createRadialGradient(mx,my,0,mx,my,120);
+      g.addColorStop(0,'rgba(127,119,221,0.12)');
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    }
+
+    // code lines
+    lines.forEach((l,i)=>{
+      const pulse=0.7+0.3*Math.sin(t*1.2+i*0.8);
+      const pw=hov? l.w+0.08*Math.sin(t*2+i) : l.w;
+      ctx.fillStyle=l.c;
+      ctx.globalAlpha=pulse;
+      ctx.beginPath();
+      ctx.roundRect(l.x*w,l.y*h,pw*w,4,2);
+      ctx.fill();
+      ctx.globalAlpha=1;
+    });
+
+    // chart area
+    ctx.strokeStyle='rgba(127,119,221,0.2)';
+    ctx.lineWidth=1;
+    ctx.strokeRect(0.5*w,0.15*h,0.44*w,0.6*h);
+
+    // chart bars
+    const bars=[0.4,0.7,0.5,0.85,0.6,0.9];
+    bars.forEach((bh,i)=>{
+      const animH=hov? bh+0.05*Math.sin(t*1.5+i) : bh+0.02*Math.sin(t*0.8+i);
+      const barW=0.055*w;
+      const barH=animH*0.45*h;
+      const bx=0.525*w+i*(barW+0.01*w);
+      const by=0.73*h-barH;
+      const alpha=0.5+0.3*Math.sin(t+i*0.6);
+      ctx.fillStyle=`rgba(83,74,183,${alpha})`;
+      ctx.beginPath();
+      ctx.roundRect(bx,by,barW,barH,3);
+      ctx.fill();
+      ctx.fillStyle=`rgba(127,119,221,0.8)`;
+      ctx.beginPath();
+      ctx.roundRect(bx,by,barW,3,2);
+      ctx.fill();
+    });
+
+    // floating dots
+    dots.forEach((d,i)=>{
+      const ox=hov? 8*Math.sin(t*1.1+i*1.3) : 3*Math.sin(t*0.7+i);
+      const oy=hov? 8*Math.cos(t*0.9+i*1.1) : 3*Math.cos(t*0.6+i);
+      ctx.beginPath();
+      ctx.arc(d.x*w+ox,d.y*h+oy,d.r+(hov?1.5:0),0,Math.PI*2);
+      ctx.fillStyle=d.c;
+      ctx.globalAlpha=0.7+0.3*Math.sin(t+i);
+      ctx.fill();
+      ctx.globalAlpha=1;
+    });
+
+    // bottom bar
+    ctx.fillStyle='#0d0c22';
+    ctx.fillRect(0,h-20,w,20);
+    ctx.fillStyle=hov?'rgba(127,119,221,0.6)':'rgba(83,74,183,0.3)';
+    ctx.beginPath();
+    ctx.roundRect(w/2-30,h-13,60,7,4);
+    ctx.fill();
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  card.addEventListener('mouseenter',()=>{card.style.borderColor='rgba(127,119,221,.7)';});
+  card.addEventListener('mouseleave',()=>{card.style.borderColor='rgba(127,119,221,.3)';});
+})();
+
+// ─── CARD 2: AGENTES DE IA ───────────────────────────────
+(function(){
+  let{ctx,w,h}=setupCanvas('cv2');
+  let mx=w/2,my=h/2,hov=false,t=0;
+  const card=document.getElementById('c2');
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    mx=e.clientX-r.left; my=e.clientY-r.top; hov=true;
+  });
+  card.addEventListener('mouseleave',()=>{hov=false});
+  card.style.borderColor='rgba(55,138,221,.3)';
+
+  const cx2=w/2,cy2=h/2;
+  const nodes=[];
+  // center
+  nodes.push({x:cx2,y:cy2,r:18,main:true});
+  // orbit nodes
+  for(let i=0;i<8;i++){
+    const a=(i/8)*Math.PI*2;
+    nodes.push({x:cx2+Math.cos(a)*85,y:cy2+Math.sin(a)*65,r:9,angle:a,orbit:true,speed:0.003+i*0.0004,phase:i});
+  }
+  // outer
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2+0.3;
+    nodes.push({x:cx2+Math.cos(a)*140,y:cy2+Math.sin(a)*100,r:5,angle:a,outer:true,speed:0.002,phase:i*1.2});
+  }
+
+  function draw(){
+    t+=0.01;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.fillStyle='#020b18';
+    ctx.fillRect(0,0,w,h);
+
+    const hovDist=hov? Math.hypot(mx-cx2,my-cy2) : 999;
+    const hoverPull=hov? Math.max(0,1-(hovDist/200)) : 0;
+
+    // outer ring
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,140,0,Math.PI*2);
+    ctx.strokeStyle='rgba(24,95,165,0.2)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,85,0,Math.PI*2);
+    ctx.strokeStyle='rgba(24,95,165,0.3)';
+    ctx.stroke();
+
+    // connections to center
+    nodes.slice(1,9).forEach((n,i)=>{
+      const a=n.angle+t*n.speed*40;
+      const r=85+hoverPull*15;
+      const nx=cx2+Math.cos(a)*r;
+      const ny=cy2+Math.sin(a)*r;
+      ctx.beginPath();
+      ctx.moveTo(cx2,cy2);
+      ctx.lineTo(nx,ny);
+      const pulse=0.4+0.3*Math.sin(t*2+n.phase);
+      ctx.strokeStyle=`rgba(55,138,221,${pulse})`;
+      ctx.lineWidth=1;
+      ctx.stroke();
+    });
+
+    // outer connections
+    nodes.slice(9).forEach((n,i)=>{
+      const a=n.angle+t*n.speed*25;
+      const r2=140+hoverPull*20;
+      const nx=cx2+Math.cos(a)*r2;
+      const ny=cy2+Math.sin(a)*r2;
+      const closeNode=nodes[1+(i%8)];
+      const ca=closeNode.angle+t*closeNode.speed*40;
+      const cnx=cx2+Math.cos(ca)*85;
+      const cny=cy2+Math.sin(ca)*85;
+      ctx.beginPath();
+      ctx.moveTo(nx,ny);
+      ctx.lineTo(cnx,cny);
+      ctx.strokeStyle='rgba(12,68,124,0.5)';
+      ctx.lineWidth=0.8;
+      ctx.stroke();
+    });
+
+    // hover glow
+    if(hov){
+      const g=ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,160);
+      g.addColorStop(0,`rgba(55,138,221,${0.08+hoverPull*0.1})`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+
+      const g2=ctx.createRadialGradient(mx,my,0,mx,my,80);
+      g2.addColorStop(0,'rgba(133,183,235,0.08)');
+      g2.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g2; ctx.fillRect(0,0,w,h);
+    }
+
+    // orbit nodes
+    nodes.slice(1,9).forEach((n,i)=>{
+      const a=n.angle+t*n.speed*40;
+      const r=85+hoverPull*15;
+      const nx=cx2+Math.cos(a)*r;
+      const ny=cy2+Math.sin(a)*r;
+      ctx.beginPath();
+      ctx.arc(nx,ny,n.r+(hoverPull*3),0,Math.PI*2);
+      ctx.fillStyle='#042C53';
+      ctx.fill();
+      ctx.strokeStyle='#378ADD';
+      ctx.lineWidth=1;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(nx,ny,n.r*0.5,0,Math.PI*2);
+      ctx.fillStyle='#185FA5';
+      ctx.fill();
+    });
+
+    // outer nodes
+    nodes.slice(9).forEach((n,i)=>{
+      const a=n.angle+t*n.speed*25;
+      const r2=140+hoverPull*20;
+      const nx=cx2+Math.cos(a)*r2;
+      const ny=cy2+Math.sin(a)*r2;
+      ctx.beginPath();
+      ctx.arc(nx,ny,n.r+(hoverPull*2),0,Math.PI*2);
+      ctx.fillStyle='#042C53';
+      ctx.fill();
+      ctx.strokeStyle='rgba(55,138,221,0.6)';
+      ctx.lineWidth=0.8;
+      ctx.stroke();
+    });
+
+    // central node
+    const centralR=18+hoverPull*8;
+    const g3=ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,centralR*2);
+    g3.addColorStop(0,`rgba(55,138,221,${0.3+hoverPull*0.3})`);
+    g3.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g3; ctx.fillRect(0,0,w,h);
+
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,centralR+6,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(55,138,221,${0.3+hoverPull*0.4})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,centralR,0,Math.PI*2);
+    ctx.fillStyle='#042C53';
+    ctx.fill();
+    ctx.strokeStyle='#378ADD';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,centralR*0.55,0,Math.PI*2);
+    ctx.fillStyle='#185FA5';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx2-3,cy2-3,centralR*0.2,0,Math.PI*2);
+    ctx.fillStyle='#B5D4F4';
+    ctx.fill();
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  card.addEventListener('mouseenter',()=>{card.style.borderColor='rgba(55,138,221,.7)';});
+  card.addEventListener('mouseleave',()=>{card.style.borderColor='rgba(55,138,221,.3)';});
+})();
+
+// ─── CARD 3: INTEGRACIÓN & AUTOMATIZACIÓN ────────────────
+(function(){
+  let{ctx,w,h}=setupCanvas('cv3');
+  let mx=w/2,my=h/2,hov=false,t=0;
+  const card=document.getElementById('c3');
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    mx=e.clientX-r.left; my=e.clientY-r.top; hov=true;
+  });
+  card.addEventListener('mouseleave',()=>{hov=false});
+  card.style.borderColor='rgba(29,158,117,.3)';
+
+  const cx3=w/2,cy3=h/2;
+  const sysNodes=[
+    {x:0.12,y:0.25,label:'CRM'},
+    {x:0.12,y:0.55,label:'ERP'},
+    {x:0.12,y:0.78,label:'DB'},
+    {x:0.88,y:0.25,label:'API'},
+    {x:0.88,y:0.55,label:'ML'},
+    {x:0.88,y:0.78,label:'SaaS'},
+  ];
+
+  const particles=[];
+  for(let i=0;i<20;i++){
+    particles.push({
+      fromLeft:Math.random()>0.5,
+      nodeIdx:Math.floor(Math.random()*3),
+      progress:Math.random(),
+      speed:0.003+Math.random()*0.004,
+      size:2+Math.random()*2,
+    });
+  }
+
+  function draw(){
+    t+=0.01;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.fillStyle='#030e09';
+    ctx.fillRect(0,0,w,h);
+
+    if(hov){
+      const g=ctx.createRadialGradient(mx,my,0,mx,my,150);
+      g.addColorStop(0,'rgba(29,158,117,0.1)');
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    }
+
+    // central hub
+    const hubR=28+hov*8;
+    const hubPulse=hov? 28+6*Math.sin(t*2) : 28+2*Math.sin(t*1.2);
+
+    // hub rings
+    [1.8,1.4,1].forEach((scale,i)=>{
+      ctx.beginPath();
+      ctx.arc(cx3,cy3,hubPulse*scale,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(29,158,117,${0.15-i*0.04})`;
+      ctx.lineWidth=1;
+      ctx.stroke();
+    });
+
+    // connections
+    sysNodes.forEach((n,i)=>{
+      const nx=n.x*w, ny=n.y*h;
+      const cp1x=cx3+(nx-cx3)*0.3+(hov?20*Math.sin(t+i):0);
+      const cp1y=cy3+(ny-cy3)*0.3+(hov?10*Math.cos(t+i):0);
+      const pulse=0.3+0.2*Math.sin(t*1.5+i*0.8);
+      ctx.beginPath();
+      ctx.moveTo(nx,ny);
+      ctx.quadraticCurveTo(cp1x,cp1y,cx3,cy3);
+      ctx.strokeStyle=`rgba(15,110,86,${pulse})`;
+      ctx.lineWidth=hov?1.5:1;
+      ctx.stroke();
+    });
+
+    // particles along paths
+    particles.forEach(p=>{
+      p.progress+=p.speed*(hov?1.8:1);
+      if(p.progress>1) p.progress=0;
+      const n=sysNodes[p.nodeIdx+(p.fromLeft?0:3)];
+      const nx=n.x*w, ny=n.y*h;
+      const prog=p.fromLeft? p.progress : 1-p.progress;
+      const px=lerp(nx,cx3,prog);
+      const py=lerp(ny,cy3,prog);
+      ctx.beginPath();
+      ctx.arc(px,py,p.size,0,Math.PI*2);
+      ctx.fillStyle=`rgba(93,202,165,${0.6+0.4*Math.sin(t*3+p.nodeIdx)})`;
+      ctx.fill();
+    });
+
+    // system nodes
+    sysNodes.forEach((n,i)=>{
+      const nx=n.x*w, ny=n.y*h;
+      const nodeR=hov?18:15;
+      ctx.beginPath();
+      ctx.roundRect(nx-nodeR,ny-12,nodeR*2,24,6);
+      ctx.fillStyle='#04342C';
+      ctx.fill();
+      ctx.strokeStyle=hov?'#1D9E75':'#0F6E56';
+      ctx.lineWidth=1;
+      ctx.stroke();
+      ctx.fillStyle=hov?'#5DCAA5':'#1D9E75';
+      ctx.font=`500 11px system-ui`;
+      ctx.textAlign='center';
+      ctx.fillText(n.label,nx,ny+4);
+    });
+
+    // hub center
+    ctx.beginPath();
+    ctx.arc(cx3,cy3,hubPulse,0,Math.PI*2);
+    ctx.fillStyle='#04342C';
+    ctx.fill();
+    ctx.strokeStyle='#1D9E75';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx3,cy3,hubPulse*0.55,0,Math.PI*2);
+    ctx.fillStyle='#1D9E75';
+    ctx.fill();
+
+    // gear symbol in hub
+    ctx.strokeStyle='#04342C';
+    ctx.lineWidth=2;
+    for(let i=0;i<8;i++){
+      const a=(i/8)*Math.PI*2+t*(hov?1.5:0.5);
+      ctx.beginPath();
+      ctx.moveTo(cx3+Math.cos(a)*5,cy3+Math.sin(a)*5);
+      ctx.lineTo(cx3+Math.cos(a)*12,cy3+Math.sin(a)*12);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(cx3,cy3,5,0,Math.PI*2);
+    ctx.fillStyle='#5DCAA5';
+    ctx.fill();
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  card.addEventListener('mouseenter',()=>{card.style.borderColor='rgba(29,158,117,.7)';});
+  card.addEventListener('mouseleave',()=>{card.style.borderColor='rgba(29,158,117,.3)';});
+})();
+
+// ─── CARD 4: CONSULTORÍA ESTRATÉGICA ─────────────────────
+(function(){
+  let{ctx,w,h}=setupCanvas('cv4');
+  let mx=w/2,my=h/2,hov=false,t=0;
+  const card=document.getElementById('c4');
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    mx=e.clientX-r.left; my=e.clientY-r.top; hov=true;
+  });
+  card.addEventListener('mouseleave',()=>{hov=false});
+  card.style.borderColor='rgba(186,117,23,.3)';
+
+  const steps=[
+    {x:0.15,label:'Diagnóstico',icon:'◎'},
+    {x:0.38,label:'Estrategia',icon:'◈'},
+    {x:0.62,label:'Ejecución',icon:'◆'},
+    {x:0.85,label:'Escala',icon:'★'},
+  ];
+
+  const floatingDots=[];
+  for(let i=0;i<30;i++){
+    floatingDots.push({
+      x:Math.random()*1,y:Math.random()*1,
+      vx:(Math.random()-.5)*0.001,vy:-0.0005-Math.random()*0.001,
+      size:1+Math.random()*2,life:Math.random(),
+    });
+  }
+
+  function draw(){
+    t+=0.01;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.fillStyle='#0d0800';
+    ctx.fillRect(0,0,w,h);
+
+    // grid
+    ctx.strokeStyle='rgba(99,56,6,0.15)';
+    ctx.lineWidth=0.5;
+    for(let x=0;x<w;x+=40){
+      ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+    }
+    for(let y=0;y<h;y+=40){
+      ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+    }
+
+    if(hov){
+      const g=ctx.createRadialGradient(mx,my,0,mx,my,180);
+      g.addColorStop(0,'rgba(186,117,23,0.12)');
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    }
+
+    // floating particles
+    floatingDots.forEach(d=>{
+      d.x+=d.vx+(hov?0.0003:0);
+      d.y+=d.vy;
+      d.life-=0.003;
+      if(d.life<=0||d.y<0){
+        d.x=Math.random(); d.y=1; d.life=0.5+Math.random()*0.5;
+      }
+      ctx.beginPath();
+      ctx.arc(d.x*w,d.y*h,d.size,0,Math.PI*2);
+      ctx.fillStyle=`rgba(186,117,23,${d.life*0.4})`;
+      ctx.fill();
+    });
+
+    // path line
+    const pathY=h*0.52;
+    const pathProgress=hov? Math.min(1,(t%4)/2) : 0.8;
+    ctx.beginPath();
+    ctx.moveTo(0.08*w,pathY);
+
+    steps.forEach((s,i)=>{
+      if(i<steps.length-1){
+        ctx.lineTo(s.x*w,pathY);
+        ctx.lineTo((s.x+0.04)*w,pathY+(Math.sin(t+i)*3));
+      }
+    });
+    ctx.lineTo(0.92*w,pathY);
+    ctx.strokeStyle='rgba(99,56,6,0.6)';
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    // active path highlight
+    ctx.beginPath();
+    ctx.moveTo(0.08*w,pathY);
+    ctx.lineTo(0.92*w*pathProgress+0.08*w*(1-pathProgress),pathY);
+    ctx.strokeStyle='rgba(186,117,23,0.8)';
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    // steps
+    steps.forEach((s,i)=>{
+      const sx=s.x*w;
+      const isActive=hov || i<3;
+      const isLast=i===3;
+      const nodeR=isLast? (hov?22:18) : (hov?16:13);
+      const pulse=isLast? nodeR+4*Math.sin(t*2) : nodeR;
+
+      if(isLast){
+        const pg=ctx.createRadialGradient(sx,pathY,0,sx,pathY,pulse*2);
+        pg.addColorStop(0,`rgba(239,159,39,${hov?0.3:0.15})`);
+        pg.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=pg; ctx.fillRect(sx-pulse*2,pathY-pulse*2,pulse*4,pulse*4);
+      }
+
+      ctx.beginPath();
+      ctx.arc(sx,pathY,pulse,0,Math.PI*2);
+      ctx.fillStyle=isLast?'#1f1500':'#120c00';
+      ctx.fill();
+      ctx.strokeStyle=isLast?(hov?'#FAC775':'#EF9F27'):(isActive?'#BA7517':'#633806');
+      ctx.lineWidth=isLast?2:1.5;
+      ctx.stroke();
+
+      if(isLast){
+        ctx.beginPath();
+        ctx.arc(sx,pathY,nodeR*0.55,0,Math.PI*2);
+        ctx.fillStyle=hov?'#EF9F27':'#BA7517';
+        ctx.fill();
+      } else {
+        ctx.fillStyle=isActive?'#BA7517':'#633806';
+        ctx.font='bold 11px system-ui';
+        ctx.textAlign='center';
+        ctx.fillText(i+1+'',sx,pathY+4);
+      }
+
+      // label
+      ctx.fillStyle=isLast?(hov?'#FAC775':'#EF9F27'):(isActive?'#BA7517':'#412402');
+      ctx.font=`${isLast?'500':'400'} 10px system-ui`;
+      ctx.textAlign='center';
+      ctx.fillText(s.label,sx,pathY+nodeR+16);
+
+      // mini artifact above
+      if(isActive && i<3){
+        const aw=50,ah=28;
+        const ax=sx-aw/2, ay=pathY-nodeR-42;
+        ctx.fillStyle='rgba(18,12,0,0.9)';
+        ctx.beginPath();
+        ctx.roundRect(ax,ay,aw,ah,5);
+        ctx.fill();
+        ctx.strokeStyle='rgba(99,56,6,0.6)';
+        ctx.lineWidth=0.8;
+        ctx.stroke();
+
+        ctx.fillStyle=hov?'#BA7517':'#633806';
+        ctx.fillRect(ax+6,ay+6,aw*0.5,3);
+        ctx.fillStyle='rgba(99,56,6,0.5)';
+        ctx.fillRect(ax+6,ay+14,aw*0.7,2);
+        ctx.fillRect(ax+6,ay+21,aw*0.4,2);
+
+        // connector
+        ctx.beginPath();
+        ctx.moveTo(sx,ay+ah);
+        ctx.lineTo(sx,pathY-nodeR);
+        ctx.strokeStyle='rgba(99,56,6,0.4)';
+        ctx.lineWidth=0.8;
+        ctx.setLineDash([3,3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  card.addEventListener('mouseenter',()=>{card.style.borderColor='rgba(186,117,23,.7)';});
+  card.addEventListener('mouseleave',()=>{card.style.borderColor='rgba(186,117,23,.3)';});
+})();
+</script>

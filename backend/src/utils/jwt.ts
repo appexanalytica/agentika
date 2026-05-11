@@ -1,32 +1,23 @@
 import jwt from 'jsonwebtoken';
-import type { UserRole } from '../models/User.js';
-
-export interface TokenPayload {
-  sub: string;
-  username: string;
-  email: string;
-  role: UserRole;
-}
-
-const getSecret = (): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
-};
-
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+import config from '../config/env.js';
+import type { TokenPayload } from '../types/index.js';
 
 export const generateAccessToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, getSecret(), { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, config.jwt.secret, {
+    expiresIn: config.jwt.expiresIn,
+  });
 };
 
 export const generateRefreshToken = (payload: { sub: string }): string => {
-  return jwt.sign(payload, getSecret(), { expiresIn: JWT_REFRESH_EXPIRES_IN });
+  return jwt.sign(payload, config.jwt.refreshSecret, {
+    expiresIn: config.jwt.refreshExpiresIn,
+  });
 };
 
 export const verifyToken = (token: string): TokenPayload => {
-  return jwt.verify(token, getSecret()) as TokenPayload;
+  return jwt.verify(token, config.jwt.secret) as TokenPayload;
+};
+
+export const verifyRefreshToken = (token: string): { sub: string } => {
+  return jwt.verify(token, config.jwt.refreshSecret) as { sub: string };
 };

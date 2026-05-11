@@ -1,0 +1,342 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+  .df-section {
+    font-family: 'DM Sans', sans-serif;
+    background: #0d0b1a;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    min-height: 520px;
+    color: #e8e4f0;
+  }
+
+  .stars-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .df-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    min-height: 520px;
+  }
+
+  .df-left {
+    padding: 3rem 2.5rem;
+    border-right: 0.5px solid rgba(180,160,255,0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .df-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(180,160,255,0.6);
+  }
+
+  .df-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.2rem;
+    line-height: 1.05;
+    font-weight: 700;
+    color: #f0ecff;
+    margin: 0;
+  }
+
+  .df-title em {
+    font-style: italic;
+    color: #c4b5fd;
+  }
+
+  .df-body {
+    font-size: 14px;
+    line-height: 1.75;
+    color: rgba(220,210,240,0.85);
+    max-width: 380px;
+  }
+
+  .df-stats {
+    display: flex;
+    gap: 2.5rem;
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 0.5px solid rgba(180,160,255,0.12);
+  }
+
+  .df-stat-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(180,160,255,0.5);
+    margin-bottom: 4px;
+  }
+
+  .df-stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #c4b5fd;
+  }
+
+  .df-right {
+    padding: 2.5rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .df-approach-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(180,160,255,0.4);
+    margin-bottom: 1.5rem;
+  }
+
+  .df-card {
+    padding: 1.25rem 0;
+    border-bottom: 0.5px solid rgba(180,160,255,0.08);
+    cursor: pointer;
+    transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    position: relative;
+  }
+
+  .df-card:first-of-type {
+    border-top: 0.5px solid rgba(180,160,255,0.08);
+  }
+
+  .df-card:hover {
+    transform: translateX(4px);
+  }
+
+  .df-card.active {
+    background: rgba(196,181,253,0.06);
+    border-color: rgba(196,181,253,0.22);
+  }
+
+  .df-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .df-card-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(180,160,255,0.3);
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+
+  .df-card.active .df-card-dot {
+    background: #c4b5fd;
+    box-shadow: 0 0 8px rgba(196,181,253,0.6);
+  }
+
+  .df-card-title {
+    font-weight: 500;
+    font-size: 15px;
+    color: rgba(230,220,255,0.8);
+    transition: color 0.3s;
+  }
+
+  .df-card.active .df-card-title {
+    color: #f0ecff;
+  }
+
+  .df-card-arrow {
+    margin-left: auto;
+    font-size: 16px;
+    color: rgba(180,160,255,0.3);
+    transition: all 0.3s;
+  }
+
+  .df-card.active .df-card-arrow {
+    color: #c4b5fd;
+    transform: rotate(90deg);
+  }
+
+  .df-card-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.3s ease;
+    opacity: 0;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: rgba(200,190,230,0.78);
+    padding-left: 18px;
+  }
+
+  .df-card.active .df-card-body {
+    max-height: 132px;
+    opacity: 1;
+    padding-top: 0.6rem;
+  }
+
+  .df-card:hover .df-card-title {
+    color: #e8e0ff;
+  }
+
+  .df-card:hover .df-card-dot {
+    background: rgba(196,181,253,0.6);
+  }
+
+  .orbit-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 0.5px solid rgba(196,181,253,0.06);
+    pointer-events: none;
+  }
+</style>
+
+<div class="df-section">
+  <canvas class="stars-canvas" id="starsCanvas"></canvas>
+
+  <div class="orbit-ring" style="width:320px;height:320px;bottom:-80px;left:-60px;"></div>
+  <div class="orbit-ring" style="width:200px;height:200px;bottom:-30px;left:10px;"></div>
+
+  <div class="df-grid">
+    <div class="df-left">
+      <div class="df-label">Nuestra Filosofía</div>
+      <h2 class="df-title">Diseño con<br><em>propósito</em></h2>
+      <p class="df-body">No buscamos adornos por sí mismos. Creamos productos digitales que conectan con las necesidades reales de usuarios, procesos y equipos, sin perder la claridad de cada decisión.</p>
+      <p class="df-body" style="font-size:13px; color:rgba(200,185,240,0.65);">Cada proyecto nace de un problema concreto y termina con una experiencia simplificada, coherente y escalable.</p>
+      <div class="df-stats">
+        <div>
+          <div class="df-stat-label" id="metricLabel">Impacto</div>
+          <div class="df-stat-value" id="metricValue">0%</div>
+        </div>
+        <div>
+          <div class="df-stat-label">Clientes</div>
+          <div class="df-stat-value">120+</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="df-right">
+      <div class="df-approach-label">Principios</div>
+
+      <div class="df-card active" data-index="0">
+        <div class="df-card-header">
+          <div class="df-card-dot"></div>
+          <span class="df-card-title">Claridad</span>
+          <span class="df-card-arrow">›</span>
+        </div>
+        <div class="df-card-body">Diseñamos interfaces que se entienden al primer vistazo, con jerarquías limpias y caminos de acción claros para todo usuario y equipo.</div>
+      </div>
+
+      <div class="df-card" data-index="1">
+        <div class="df-card-header">
+          <div class="df-card-dot"></div>
+          <span class="df-card-title">Ritmo</span>
+          <span class="df-card-arrow">›</span>
+        </div>
+        <div class="df-card-body">Iteramos rápido sobre prototipos reales, aprendiendo cada semana para asegurar que la solución avance con enfoque y sin desperdicio.</div>
+      </div>
+
+      <div class="df-card" data-index="2">
+        <div class="df-card-header">
+          <div class="df-card-dot"></div>
+          <span class="df-card-title">Sostenibilidad</span>
+          <span class="df-card-arrow">›</span>
+        </div>
+        <div class="df-card-body">Construimos sistemas que pueden crecer: tecnologías maduras, documentación accesible y decisiones de diseño pensadas para la continuidad.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cardsData = [
+  { statLabel: 'Impacto', statValue: '95%', color: 250 },
+  { statLabel: 'Adopción', statValue: '84%', color: 190 },
+  { statLabel: 'Longevidad', statValue: '12 años', color: 40 }
+];
+
+const cards = Array.from(document.querySelectorAll('.df-card'));
+const metricLabel = document.getElementById('metricLabel');
+const metricValue = document.getElementById('metricValue');
+const starsCanvas = document.getElementById('starsCanvas');
+const starsCtx = starsCanvas.getContext('2d');
+const section = starsCanvas.parentElement;
+
+let activeIndex = 0;
+let currentHue = cardsData[0].color;
+let targetHue = currentHue;
+let countValue = 0;
+const countTarget = 95;
+
+function resizeCanvas() {
+  starsCanvas.width = section.offsetWidth;
+  starsCanvas.height = section.offsetHeight;
+}
+
+function updateActive(index) {
+  activeIndex = index;
+  cards.forEach((card, cardIndex) => {
+    card.classList.toggle('active', cardIndex === index);
+  });
+  metricLabel.textContent = cardsData[index].statLabel;
+  metricValue.textContent = cardsData[index].statValue;
+  targetHue = cardsData[index].color;
+}
+
+cards.forEach((card) => {
+  card.addEventListener('click', () => {
+    updateActive(Number(card.dataset.index));
+  });
+});
+
+updateActive(0);
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const stars = Array.from({ length: 120 }, () => ({
+  x: Math.random(),
+  y: Math.random(),
+  r: Math.random() * 1.2 + 0.2,
+  alpha: Math.random() * 0.5 + 0.1,
+  speed: Math.random() * 0.3 + 0.05,
+  phase: Math.random() * Math.PI * 2
+}));
+
+let t = 0;
+
+function drawStars() {
+  starsCtx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
+  stars.forEach((star) => {
+    const x = star.x * starsCanvas.width;
+    const y = star.y * starsCanvas.height;
+    const alpha = star.alpha * (0.7 + 0.3 * Math.sin(t * star.speed + star.phase));
+    starsCtx.beginPath();
+    starsCtx.arc(x, y, star.r, 0, Math.PI * 2);
+    starsCtx.fillStyle = `hsla(${currentHue}, 75%, 85%, ${alpha})`;
+    starsCtx.fill();
+  });
+  t += 0.02;
+  currentHue += (targetHue - currentHue) * 0.02;
+  requestAnimationFrame(drawStars);
+}
+
+drawStars();
+
+function animateCount() {
+  if (countValue < countTarget) {
+    countValue += 1;
+    metricValue.textContent = countValue + '%';
+    requestAnimationFrame(animateCount);
+  }
+}
+
+setTimeout(animateCount, 600);
+</script>

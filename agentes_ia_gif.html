@@ -1,0 +1,269 @@
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#020c16;display:flex;align-items:center;justify-content:center;min-height:100vh}</style>
+<canvas id="c" width="800" height="500"></canvas>
+<script>
+const cv=document.getElementById('c');
+const ctx=cv.getContext('2d');
+const W=800,H=500;
+let t=0;
+
+function rr(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+// Conversation messages
+const messages=[
+  {from:'user',text:'Analiza ventas Q3 y sugiere acciones',delay:0.5},
+  {from:'agent',text:'Analizando 2.4M registros...',delay:2,thinking:true},
+  {from:'agent',text:'↓ 12% en LATAM. Recomiendo ajustar precio en MX.',delay:4},
+  {from:'user',text:'Ejecuta la campaña de retención',delay:6},
+  {from:'agent',text:'Campaña activa. Notificando a 8.400 usuarios.',delay:7.5},
+  {from:'agent',text:'✓ Tasa apertura: 34% — por encima del promedio',delay:9.5},
+];
+
+// Agent "brain" tasks cycling
+const tasks=[
+  'Procesando datos...',
+  'Evaluando opciones...',
+  'Ejecutando acción...',
+  'Monitoreando resultado...',
+  'Aprendiendo patrón...',
+];
+
+// Metrics that update
+function getMetric(base,amp,freq,off){
+  return Math.round(base+amp*Math.sin(t*freq+off));
+}
+
+function drawChat(){
+  // chat panel
+  rr(20,30,370,440,14);
+  ctx.fillStyle='#07111d';
+  ctx.fill();
+  ctx.strokeStyle='rgba(55,138,221,0.3)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+
+  // header
+  rr(20,30,370,44,14);
+  ctx.fillStyle='#0c1e30';
+  ctx.fill();
+  rr(20,56,370,18,0);
+  ctx.fillStyle='#0c1e30';
+  ctx.fill();
+
+  // avatar
+  ctx.beginPath();
+  ctx.arc(48,52,12,0,Math.PI*2);
+  ctx.fillStyle='#185FA5';
+  ctx.fill();
+  ctx.fillStyle='#B5D4F4';
+  ctx.font='bold 10px system-ui';
+  ctx.textAlign='center';
+  ctx.fillText('AI',48,56);
+  ctx.textAlign='left';
+
+  ctx.fillStyle='#85B7EB';
+  ctx.font='500 12px system-ui';
+  ctx.fillText('Agente de Ventas',66,49);
+  ctx.fillStyle='rgba(93,202,165,0.9)';
+  ctx.font='10px system-ui';
+  ctx.fillText('● activo',66,62);
+
+  // messages
+  let msgY=90;
+  messages.forEach((msg,i)=>{
+    if(t<msg.delay) return;
+    const appear=Math.min(1,(t-msg.delay)*3);
+    ctx.globalAlpha=appear;
+
+    const isUser=msg.from==='user';
+    const maxW=260;
+    const pad=10;
+
+    ctx.font='12px system-ui';
+    const words=msg.text.split(' ');
+    const lines=[];
+    let cur='';
+    words.forEach(w=>{
+      const test=cur? cur+' '+w : w;
+      if(ctx.measureText(test).width>maxW-pad*2){lines.push(cur);cur=w;}
+      else cur=test;
+    });
+    lines.push(cur);
+
+    const bh=lines.length*18+pad*2;
+    const bx=isUser? 380-maxW-10 : 30;
+
+    rr(bx,msgY,maxW,bh,10);
+    ctx.fillStyle=isUser?'#0C447C':'#0c1e30';
+    ctx.fill();
+    ctx.strokeStyle=isUser?'rgba(55,138,221,0.4)':'rgba(55,138,221,0.2)';
+    ctx.lineWidth=0.8;
+    ctx.stroke();
+
+    lines.forEach((line,li)=>{
+      ctx.fillStyle=isUser?'#85B7EB':'#cce4f7';
+      if(msg.thinking) ctx.fillStyle='rgba(133,183,235,0.7)';
+      ctx.fillText(line,bx+pad,msgY+pad+14+li*18);
+    });
+
+    if(msg.thinking && t>msg.delay && t<msg.delay+1.5){
+      [0,1,2].forEach(j=>{
+        ctx.beginPath();
+        ctx.arc(bx+pad+8+j*14,msgY+bh/2+4+Math.sin(t*4+j)*3,3,0,Math.PI*2);
+        ctx.fillStyle='rgba(133,183,235,0.8)';
+        ctx.fill();
+      });
+    }
+
+    msgY+=bh+10;
+    ctx.globalAlpha=1;
+  });
+}
+
+function drawBrain(){
+  const cx=590,cy=240;
+
+  // outer glow
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,180);
+  g.addColorStop(0,'rgba(24,95,165,0.08)');
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // rotating ring
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(t*0.3);
+  ctx.beginPath();
+  ctx.arc(0,0,140,0,Math.PI*1.6);
+  ctx.strokeStyle='rgba(24,95,165,0.4)';
+  ctx.lineWidth=2;
+  ctx.lineCap='round';
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(-t*0.2);
+  ctx.beginPath();
+  ctx.arc(0,0,115,0,Math.PI*1.2);
+  ctx.strokeStyle='rgba(55,138,221,0.3)';
+  ctx.lineWidth=1.5;
+  ctx.lineCap='round';
+  ctx.stroke();
+  ctx.restore();
+
+  // task cards orbiting
+  tasks.forEach((task,i)=>{
+    const angle=(i/tasks.length)*Math.PI*2+t*0.25;
+    const r=140;
+    const nx=cx+Math.cos(angle)*r;
+    const ny=cy+Math.sin(angle)*r;
+    const activeIdx=Math.floor(t*0.8)%tasks.length;
+    const isActive=i===activeIdx;
+
+    rr(nx-55,ny-14,110,28,8);
+    ctx.fillStyle=isActive?'#0C447C':'#06111f';
+    ctx.fill();
+    ctx.strokeStyle=isActive?'#378ADD':'rgba(24,95,165,0.3)';
+    ctx.lineWidth=isActive?1.5:0.8;
+    ctx.stroke();
+
+    ctx.fillStyle=isActive?'#B5D4F4':'rgba(133,183,235,0.5)';
+    ctx.font=`${isActive?'500':'400'} 10px system-ui`;
+    ctx.textAlign='center';
+    ctx.fillText(task,nx,ny+4);
+    ctx.textAlign='left';
+
+    // line to center
+    ctx.beginPath();
+    ctx.moveTo(nx,ny);
+    ctx.lineTo(cx,cy);
+    ctx.strokeStyle=isActive?'rgba(55,138,221,0.5)':'rgba(24,95,165,0.15)';
+    ctx.lineWidth=isActive?1.5:0.5;
+    ctx.stroke();
+  });
+
+  // central agent circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,52,0,Math.PI*2);
+  ctx.fillStyle='#020c16';
+  ctx.fill();
+  ctx.strokeStyle='#185FA5';
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,38,0,Math.PI*2);
+  ctx.fillStyle='#042C53';
+  ctx.fill();
+
+  // brain pattern inside
+  ctx.strokeStyle='rgba(55,138,221,0.6)';
+  ctx.lineWidth=1.2;
+  ctx.beginPath();
+  ctx.arc(cx-8,cy-5,14,Math.PI*0.2,Math.PI*1.1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx+8,cy-5,14,Math.PI*0,Math.PI*0.9);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-5);ctx.lineTo(cx,cy+14);
+  ctx.stroke();
+  [[-12,8],[0,16],[12,8]].forEach(([dx,dy])=>{
+    ctx.beginPath();
+    ctx.arc(cx+dx,cy+dy,3,0,Math.PI*2);
+    ctx.fillStyle='rgba(55,138,221,0.7)';
+    ctx.fill();
+  });
+
+  // metrics below
+  const metrics=[
+    {label:'Decisiones/min',val:getMetric(847,40,0.8,0)},
+    {label:'Precisión',val:getMetric(96,2,0.5,1)+'%'},
+    {label:'Tareas activas',val:getMetric(12,3,1.2,2)},
+  ];
+  metrics.forEach((m,i)=>{
+    const mx2=435+i*130,my2=400;
+    rr(mx2,my2,120,60,10);
+    ctx.fillStyle='#06111f';
+    ctx.fill();
+    ctx.strokeStyle='rgba(24,95,165,0.3)';
+    ctx.lineWidth=0.8;
+    ctx.stroke();
+    ctx.fillStyle='rgba(133,183,235,0.5)';
+    ctx.font='10px system-ui';
+    ctx.textAlign='center';
+    ctx.fillText(m.label,mx2+60,my2+20);
+    ctx.fillStyle='#85B7EB';
+    ctx.font='bold 20px system-ui';
+    ctx.fillText(m.val,mx2+60,my2+45);
+    ctx.textAlign='left';
+  });
+}
+
+function frame(){
+  t+=0.016;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#020c16';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle='rgba(24,95,165,0.06)';
+  ctx.font='bold 110px system-ui';
+  ctx.fillText('02',510,H+10);
+
+  // divider
+  ctx.strokeStyle='rgba(55,138,221,0.15)';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(400,30);ctx.lineTo(400,470);ctx.stroke();
+
+  drawChat();
+  drawBrain();
+  requestAnimationFrame(frame);
+}
+frame();
+</script>

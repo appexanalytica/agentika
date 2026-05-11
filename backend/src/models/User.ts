@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
-
-export type UserRole = 'super_admin' | 'admin' | 'user';
+import type { UserRole } from '../types/index.js';
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
@@ -12,8 +11,16 @@ export interface IUser extends Document {
   lastName: string;
   role: UserRole;
   avatar?: string;
+  phone?: string;
+  jobTitle?: string;
+  department?: string;
   isActive: boolean;
   lastLogin?: Date;
+  preferences: {
+    theme?: 'light' | 'dark';
+    language?: string;
+    notifications?: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
@@ -65,6 +72,20 @@ const UserSchema = new Schema<IUser>(
       type: String,
       default: null,
     },
+    phone: {
+      type: String,
+      default: null,
+    },
+    jobTitle: {
+      type: String,
+      default: null,
+      maxlength: [100, 'Job title must be at most 100 characters'],
+    },
+    department: {
+      type: String,
+      default: null,
+      maxlength: [100, 'Department must be at most 100 characters'],
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -73,12 +94,32 @@ const UserSchema = new Schema<IUser>(
       type: Date,
       default: null,
     },
+    preferences: {
+      theme: {
+        type: String,
+        enum: ['light', 'dark'],
+        default: 'dark',
+      },
+      language: {
+        type: String,
+        default: 'en',
+      },
+      notifications: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   { timestamps: true }
 );
 
+// Indexes
+UserSchema.index({ email: 1 });
+UserSchema.index({ username: 1 });
 UserSchema.index({ role: 1 });
+UserSchema.index({ isActive: 1 });
 
+// Password hashing middleware
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('passwordHash')) return next();
   const salt = await bcrypt.genSalt(12);
@@ -86,6 +127,7 @@ UserSchema.pre('save', async function (next) {
   next();
 });
 
+// Instance method to compare password
 UserSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {
   return bcrypt.compare(candidate, this.passwordHash);
 };

@@ -1,0 +1,259 @@
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0d0800;display:flex;align-items:center;justify-content:center;min-height:100vh}</style>
+<canvas id="c" width="800" height="500"></canvas>
+<script>
+const cv=document.getElementById('c');
+const ctx=cv.getContext('2d');
+const W=800,H=500;
+let t=0;
+
+function rr(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+const steps=[
+  {
+    x:60,label:'Diagnóstico',num:'01',
+    color:'#BA7517',
+    tasks:['Auditoría de procesos','Mapeo de sistemas','Entrevistas equipo','Análisis de gaps'],
+    icon:'🔍',
+  },
+  {
+    x:240,label:'Estrategia',num:'02',
+    color:'#EF9F27',
+    tasks:['Prioridades IA','Roadmap 90 días','KPIs definidos','Quick wins'],
+    icon:'🗺',
+  },
+  {
+    x:420,label:'Ejecución',num:'03',
+    color:'#FAC775',
+    tasks:['Sprint 1 lanzado','Agente piloto','Métricas live','Ajustes rápidos'],
+    icon:'⚙️',
+  },
+  {
+    x:600,label:'Escala',num:'04',
+    color:'#EF9F27',
+    tasks:['Expansión a equipos','Automatización +','ROI demostrado','Nuevos casos'],
+    icon:'📈',
+  },
+];
+
+// Animated KPI chart data
+const kpiData=[];
+for(let i=0;i<20;i++) kpiData.push(0.3+0.4*Math.sin(i*0.5)+0.15*Math.random());
+
+function drawTimeline(){
+  const lineY=200;
+  const lineX0=60,lineX1=740;
+
+  // base line
+  ctx.strokeStyle='rgba(99,56,6,0.4)';
+  ctx.lineWidth=2;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(lineX0,lineY);
+  ctx.lineTo(lineX1,lineY);
+  ctx.stroke();
+
+  // progress line animated
+  const prog=Math.min(1,(t*0.08));
+  const progX=lineX0+(lineX1-lineX0)*prog;
+  ctx.strokeStyle='#BA7517';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(lineX0,lineY);
+  ctx.lineTo(progX,lineY);
+  ctx.stroke();
+
+  // glow on progress tip
+  const gg=ctx.createRadialGradient(progX,lineY,0,progX,lineY,20);
+  gg.addColorStop(0,'rgba(239,159,39,0.4)');
+  gg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=gg;
+  ctx.fillRect(progX-20,lineY-20,40,40);
+
+  steps.forEach((step,i)=>{
+    const sx=step.x+90;
+    const stepProg=Math.min(1,Math.max(0,(t*0.08-i*0.25)/0.25));
+    const isActive=progX>=sx;
+    const isCurrent=Math.abs(progX-sx)<60;
+
+    // connector line up
+    ctx.strokeStyle=isActive?step.color:'rgba(99,56,6,0.3)';
+    ctx.lineWidth=1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(sx,lineY-16);
+    ctx.lineTo(sx,lineY-60);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // circle
+    const r=isCurrent? 22+3*Math.sin(t*3) : 20;
+    if(isCurrent){
+      ctx.beginPath();
+      ctx.arc(sx,lineY,r+8,0,Math.PI*2);
+      ctx.fillStyle='rgba(186,117,23,0.12)';
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(sx,lineY,r,0,Math.PI*2);
+    ctx.fillStyle=isActive?'#1f1200':'#100900';
+    ctx.fill();
+    ctx.strokeStyle=isActive?step.color:'rgba(99,56,6,0.4)';
+    ctx.lineWidth=isActive?2:1;
+    ctx.stroke();
+
+    ctx.fillStyle=isActive?step.color:'rgba(99,56,6,0.5)';
+    ctx.font='bold 13px system-ui';
+    ctx.textAlign='center';
+    ctx.fillText(step.num,sx,lineY+5);
+
+    // label below
+    ctx.fillStyle=isActive?'#FAC775':'rgba(99,56,6,0.6)';
+    ctx.font=`${isActive?'500':'400'} 11px system-ui`;
+    ctx.fillText(step.label,sx,lineY+40);
+
+    // card above
+    const cardW=155,cardH=110;
+    const cardX=sx-cardW/2,cardY=lineY-60-cardH;
+    rr(cardX,cardY,cardW,cardH,10);
+    ctx.fillStyle=isActive?'#150e00':'#0d0800';
+    ctx.fill();
+    ctx.strokeStyle=isActive?step.color+'66':'rgba(99,56,6,0.2)';
+    ctx.lineWidth=isActive?1:0.5;
+    ctx.stroke();
+
+    // card header
+    ctx.fillStyle=isActive?step.color:'rgba(99,56,6,0.4)';
+    ctx.font='500 11px system-ui';
+    ctx.textAlign='center';
+    ctx.fillText(step.icon+' '+step.label,sx,cardY+18);
+
+    // tasks
+    step.tasks.forEach((task,j)=>{
+      const appear=isActive? Math.min(1,Math.max(0,(t*0.08-(i*0.25+j*0.06))/0.06)) : 0;
+      ctx.globalAlpha=appear;
+      const taskY=cardY+32+j*17;
+      // checkbox
+      ctx.strokeStyle=appear>0.8?'#BA7517':'rgba(99,56,6,0.4)';
+      ctx.lineWidth=0.8;
+      rr(cardX+12,taskY-9,10,10,2);
+      ctx.stroke();
+      if(appear>0.8){
+        ctx.strokeStyle='#EF9F27';
+        ctx.lineWidth=1.5;
+        ctx.beginPath();
+        ctx.moveTo(cardX+14,taskY-4);
+        ctx.lineTo(cardX+17,taskY-1);
+        ctx.lineTo(cardX+21,taskY-8);
+        ctx.stroke();
+      }
+      ctx.fillStyle=appear>0.8?'rgba(250,199,117,0.8)':'rgba(99,56,6,0.5)';
+      ctx.font='10px system-ui';
+      ctx.textAlign='left';
+      ctx.fillText(task,cardX+28,taskY);
+      ctx.globalAlpha=1;
+    });
+    ctx.textAlign='left';
+  });
+}
+
+function drawKPI(){
+  // KPI panel right
+  rr(620,260,160,110,12);
+  ctx.fillStyle='#100900';
+  ctx.fill();
+  ctx.strokeStyle='rgba(186,117,23,0.4)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+
+  ctx.fillStyle='rgba(186,117,23,0.6)';
+  ctx.font='500 10px system-ui';
+  ctx.fillText('ROI proyectado',632,278);
+
+  // mini sparkline
+  const pts=kpiData.slice(0,Math.min(20,Math.floor(t*2)));
+  if(pts.length>1){
+    ctx.beginPath();
+    pts.forEach((v,i)=>{
+      const px=632+i*(120/19);
+      const py=330-v*50;
+      i===0? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+    });
+    ctx.strokeStyle='#EF9F27';
+    ctx.lineWidth=2;
+    ctx.stroke();
+    // area fill
+    ctx.lineTo(632+(pts.length-1)*(120/19),340);
+    ctx.lineTo(632,340);
+    ctx.fillStyle='rgba(186,117,23,0.1)';
+    ctx.fill();
+  }
+
+  const roiVal=Math.min(340,Math.floor(t*20));
+  ctx.fillStyle='#FAC775';
+  ctx.font='bold 22px system-ui';
+  ctx.textAlign='center';
+  ctx.fillText(roiVal+'%',700,300);
+  ctx.fillStyle='rgba(186,117,23,0.6)';
+  ctx.font='9px system-ui';
+  ctx.fillText('vs baseline',700,312);
+  ctx.textAlign='left';
+}
+
+function drawDeliverables(){
+  // bottom strip — deliverables
+  rr(20,430,775,55,10);
+  ctx.fillStyle='#100900';
+  ctx.fill();
+  ctx.strokeStyle='rgba(99,56,6,0.3)';
+  ctx.lineWidth=0.8;
+  ctx.stroke();
+
+  const items=[
+    '📋 Assessment completo',
+    '🗺 Roadmap personalizado',
+    '🤝 Sin promesas vacías',
+    '🎯 Criterio humano',
+    '📊 Métricas claras',
+  ];
+  items.forEach((item,i)=>{
+    const appear=Math.min(1,Math.max(0,(t-i*0.4)));
+    ctx.globalAlpha=appear;
+    ctx.fillStyle='rgba(186,117,23,0.7)';
+    ctx.font='11px system-ui';
+    ctx.fillText(item,32+i*148,465);
+    ctx.globalAlpha=1;
+  });
+}
+
+function frame(){
+  t+=0.016;
+  if(t>14) t=0; // loop
+  ctx.clearRect(0,0,W,H);
+
+  ctx.fillStyle='#0d0800';
+  ctx.fillRect(0,0,W,H);
+
+  // grid
+  ctx.strokeStyle='rgba(99,56,6,0.08)';
+  ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  ctx.fillStyle='rgba(99,56,6,0.05)';
+  ctx.font='bold 110px system-ui';
+  ctx.fillText('04',600,H+10);
+
+  drawTimeline();
+  drawKPI();
+  drawDeliverables();
+
+  requestAnimationFrame(frame);
+}
+frame();
+</script>

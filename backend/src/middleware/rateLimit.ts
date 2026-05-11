@@ -1,60 +1,26 @@
-import { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
+import config from '../config/env.js';
 
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
-}
+export const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { success: false, message: 'Too many login attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-const store = new Map<string, RateLimitEntry>();
+export const apiRateLimit = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.max,
+  message: { success: false, message: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_REQUESTS = 100;
-const LOGIN_MAX = 10;
-
-export const rateLimit = (maxRequests: number = MAX_REQUESTS, windowMs: number = WINDOW_MS) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const key = req.ip || 'unknown';
-    const now = Date.now();
-    const entry = store.get(key);
-
-    if (!entry || now > entry.resetTime) {
-      store.set(key, { count: 1, resetTime: now + windowMs });
-      next();
-      return;
-    }
-
-    if (entry.count >= maxRequests) {
-      res.status(429).json({
-        success: false,
-        message: 'Too many requests. Please try again later.',
-      });
-      return;
-    }
-
-    entry.count++;
-    next();
-  };
-};
-
-export const loginRateLimit = (req: Request, res: Response, next: NextFunction): void => {
-  const key = `login:${req.ip || 'unknown'}`;
-  const now = Date.now();
-  const entry = store.get(key);
-
-  if (!entry || now > entry.resetTime) {
-    store.set(key, { count: 1, resetTime: now + WINDOW_MS });
-    next();
-    return;
-  }
-
-  if (entry.count >= LOGIN_MAX) {
-    res.status(429).json({
-      success: false,
-      message: 'Too many login attempts. Please try again in 15 minutes.',
-    });
-    return;
-  }
-
-  entry.count++;
-  next();
-};
+export const publicFormRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: { success: false, message: 'Too many form submissions, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
