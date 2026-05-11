@@ -87,10 +87,11 @@ const Work = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-7xl mx-auto">
             <div className="mb-12">
-              <h1 className="text-6xl md:text-8xl font-light text-architectural mb-8">
+              <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">NUESTRO TRABAJO</span>
+              <h1 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4 mb-8">
                 NUESTRO TRABAJO
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl">
+              <p className="text-base leading-8 text-[#dccdffcc] max-w-3xl">
                 Una selección curada de nuestros proyectos de software, donde cada solución refleja precisión técnica, arquitectura sólida y foco en resultados de negocio.
               </p>
             </div>
@@ -151,29 +152,29 @@ const Work = () => {
                   
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-2xl lg:text-3xl font-light text-architectural mb-2 group-hover:text-muted-foreground transition-colors duration-500">
+                      <h3 className="text-2xl lg:text-3xl font-semibold text-white mb-2 transition-colors duration-500">
                         {project.title}
                       </h3>
-                      <p className="text-minimal text-foreground mb-1">
+                      <p className="text-sm uppercase tracking-[0.18em] text-[#b4a0ff]/80 mb-1">
                         {project.subtitle}
                       </p>
-                      <p className="text-minimal text-muted-foreground">
+                      <p className="text-base text-[#dccdffcc]">
                         {project.location}
                       </p>
                     </div>
                     
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-base leading-8 text-[#dccdffcc]">
                       {project.description}
                     </p>
                     
-                    <div className="flex gap-8 pt-4 border-t border-border">
+                    <div className="flex gap-12 pt-4 border-t border-border">
                       <div>
-                        <p className="text-minimal text-muted-foreground mb-1">STACK</p>
-                        <p className="text-foreground">{project.stack}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 mb-1">STACK</p>
+                        <p className="text-base text-[#dccdffcc]">{project.stack}</p>
                       </div>
                       <div>
-                        <p className="text-minimal text-muted-foreground mb-1">AÑO</p>
-                        <p className="text-foreground">{project.year}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 mb-1">AÑO</p>
+                        <p className="text-base text-[#dccdffcc]">{project.year}</p>
                       </div>
                     </div>
                   </div>
@@ -188,12 +189,13 @@ const Work = () => {
       <section className="py-32 bg-muted">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-6xl font-light text-architectural mb-8">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">LISTO PARA EMPEZAR</span>
+            <h2 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4 mb-8">
               ¿Listo para comenzar
               <br />
               tu proyecto?
             </h2>
-            <p className="text-xl text-muted-foreground mb-12">
+            <p className="text-base leading-8 text-[#dccdffcc] mb-12">
               Conversemos sobre cómo podemos llevar tu visión tecnológica al siguiente nivel
             </p>
             <a 

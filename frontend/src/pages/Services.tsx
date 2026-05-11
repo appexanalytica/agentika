@@ -31,8 +31,8 @@ const Services = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-7xl mx-auto">
             <div className="mb-20">
-              <h1 className="text-minimal text-muted-foreground mb-4">SERVICES</h1>
-              <h2 className="text-4xl md:text-6xl font-light text-architectural">
+              <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">SERVICES</span>
+              <h2 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4">
                 What We Do
               </h2>
             </div>
@@ -41,14 +41,14 @@ const Services = () => {
               {services.map((service, index) => (
                 <div key={index} className="group">
                   <div className="flex items-start space-x-6">
-                    <span className="text-minimal text-muted-foreground font-medium">
+                      <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 font-medium">
                       {service.number}
                     </span>
                     <div>
-                      <h3 className="text-2xl font-light mb-4 text-architectural group-hover:text-muted-foreground transition-colors duration-500">
+                      <h3 className="text-2xl font-semibold text-white mb-4 transition-colors duration-500">
                         {service.title}
                       </h3>
-                      <p className="text-muted-foreground leading-relaxed">
+                      <p className="text-base leading-8 text-[#dccdffcc]">
                         {service.description}
                       </p>
                     </div>

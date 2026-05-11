@@ -21,12 +21,12 @@ const Blog = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-7xl mx-auto">
             <div className="mb-12">
-              <h1 className="text-6xl md:text-8xl font-light text-architectural mb-8">
+              <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">INSIGHTS</span>
+              <h1 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4 mb-8">
                 INSIGHTS
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl">
-                Exploring the intersection of architecture, design, and human experience 
-                through thoughtful analysis and contemporary perspectives.
+              <p className="text-base leading-8 text-[#dccdffcc] max-w-3xl">
+                Exploring the intersection of architecture, design, and human experience through thoughtful analysis and contemporary perspectives.
               </p>
             </div>
           </div>
@@ -94,11 +94,11 @@ const Blog = () => {
                         <span>{post.author}</span>
                       </div>
                       
-                      <h2 className="text-xl lg:text-2xl font-light text-architectural group-hover:text-muted-foreground transition-colors duration-500">
+                      <h2 className="text-2xl lg:text-3xl font-semibold text-white group-hover:text-[#b4a0ff]/80 transition-colors duration-500">
                         {post.title}
                       </h2>
                       
-                      <p className="text-muted-foreground leading-relaxed line-clamp-3">
+                      <p className="text-base leading-8 text-[#dccdffcc] line-clamp-3">
                         {post.excerpt}
                       </p>
                       
@@ -120,10 +120,11 @@ const Blog = () => {
       <section className="py-32 bg-muted">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-6xl font-light text-architectural mb-8">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">NEWSLETTER</span>
+            <h2 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4 mb-8">
               Stay Informed
             </h2>
-            <p className="text-xl text-muted-foreground mb-12">
+            <p className="text-base leading-8 text-[#dccdffcc] mb-12">
               Subscribe to our newsletter for the latest insights on architecture and design
             </p>
             <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">

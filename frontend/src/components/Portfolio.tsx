@@ -32,8 +32,8 @@ const Portfolio = () => {
       <div className="container mx-auto px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-20">
-            <h2 className="text-minimal text-muted-foreground mb-4">ETHOS</h2>
-            <h3 className="text-4xl md:text-6xl font-light text-architectural">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">ETHOS</span>
+            <h3 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4">
               Nuestros Pilares
             </h3>
           </div>
@@ -50,7 +50,7 @@ const Portfolio = () => {
                   </span>
                 </div>
                 <div>
-                  <h4 className="text-2xl md:text-3xl font-light text-architectural mb-6">
+                  <h4 className="text-2xl md:text-3xl font-semibold text-white mb-6">
                     {pillar.title}
                   </h4>
                   {pillar.image && (
@@ -63,7 +63,7 @@ const Portfolio = () => {
                       />
                     </div>
                   )}
-                  <p className="text-muted-foreground leading-relaxed text-lg">
+                  <p className="text-base leading-8 text-[#dccdffcc]">
                     {pillar.description}
                   </p>
                 </div>

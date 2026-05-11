@@ -13,7 +13,8 @@ const BlogPost = () => {
         <div className="pt-32 pb-32">
           <div className="container mx-auto px-6">
             <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-4xl md:text-6xl font-light text-architectural mb-8">
+              <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">OPORTUNIDAD</span>
+              <h1 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4 mb-8">
                 Post Not Found
               </h1>
               <Link 
@@ -40,15 +41,15 @@ const BlogPost = () => {
             {/* Back Link */}
             <Link 
               to="/blog" 
-              className="inline-block text-minimal text-muted-foreground hover:text-foreground transition-colors duration-300 mb-12"
+              className="inline-block text-sm text-[#b4a0ff]/80 hover:text-white transition-colors duration-300 mb-12"
             >
               ← BACK TO BLOG
             </Link>
             
             {/* Article Meta */}
             <div className="mb-8">
-              <div className="flex items-center text-minimal text-muted-foreground space-x-4 mb-6">
-                <span className="bg-muted px-3 py-1 text-foreground">{post.category}</span>
+              <div className="flex items-center text-sm text-[#dccdffcc] space-x-4 mb-6">
+                <span className="bg-muted px-3 py-1 text-[#ffffffde]">{post.category}</span>
                 <span>{post.date}</span>
                 <span>•</span>
                 <span>{post.readTime}</span>
@@ -56,11 +57,12 @@ const BlogPost = () => {
                 <span>{post.author}</span>
               </div>
               
-              <h1 className="text-4xl md:text-6xl font-light text-architectural mb-6">
+              <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">ARTÍCULO</span>
+              <h1 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4 mb-6">
                 {post.title}
               </h1>
               
-              <p className="text-xl text-muted-foreground leading-relaxed">
+              <p className="text-base leading-8 text-[#dccdffcc]">
                 {post.excerpt}
               </p>
             </div>
@@ -75,17 +77,17 @@ const BlogPost = () => {
             </div>
             
             {/* Article Content */}
-            <div className="prose prose-lg max-w-none">
+            <div className="prose prose-lg prose-invert max-w-none">
               <div 
-                className="text-muted-foreground leading-relaxed space-y-6"
+                className="text-[#dccdffcc] leading-8 space-y-6"
                 dangerouslySetInnerHTML={{ 
                   __html: post.content
                     .split('\n')
                     .map(line => {
                       if (line.startsWith('# ')) {
-                        return `<h1 class="text-3xl md:text-4xl font-light text-architectural mb-8 mt-12">${line.substring(2)}</h1>`;
+                        return `<h1 class="text-3xl md:text-4xl font-semibold text-white mb-8 mt-12">${line.substring(2)}</h1>`;
                       } else if (line.startsWith('## ')) {
-                        return `<h2 class="text-2xl md:text-3xl font-light text-architectural mb-6 mt-10">${line.substring(3)}</h2>`;
+                        return `<h2 class="text-2xl md:text-3xl font-semibold text-white mb-6 mt-10">${line.substring(3)}</h2>`;
                       } else if (line.startsWith('### ')) {
                         return `<h3 class="text-xl md:text-2xl font-medium text-foreground mb-4 mt-8">${line.substring(4)}</h3>`;
                       } else if (line.startsWith('- **') && line.endsWith('**')) {
@@ -119,7 +121,7 @@ const BlogPost = () => {
             
             {/* Related Posts */}
             <div className="mt-20">
-              <h3 className="text-2xl font-light text-architectural mb-8">Related Articles</h3>
+              <h3 className="text-3xl font-semibold text-white mb-8">Related Articles</h3>
               <div className="grid md:grid-cols-2 gap-8">
                 {blogPosts
                   .filter(p => p.id !== post.id && p.category === post.category)
@@ -133,10 +135,10 @@ const BlogPost = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       </div>
-                      <h4 className="text-lg font-light text-architectural group-hover:text-muted-foreground transition-colors duration-300 mb-2">
+                      <h4 className="text-lg font-semibold text-white group-hover:text-[#b4a0ff]/80 transition-colors duration-300 mb-2">
                         {relatedPost.title}
                       </h4>
-                      <p className="text-minimal text-muted-foreground">{relatedPost.date} • {relatedPost.readTime}</p>
+                      <p className="text-sm text-[#dccdffcc]">{relatedPost.date} • {relatedPost.readTime}</p>
                     </Link>
                   ))
                 }

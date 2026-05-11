@@ -5,8 +5,8 @@ const Contact = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-20">
             <div>
-              <h2 className="text-minimal text-muted-foreground mb-4">CONTACTANOS</h2>
-              <h3 className="text-4xl md:text-6xl font-light text-architectural mb-12">
+              <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">CONTACTANOS</span>
+              <h3 className="text-5xl md:text-6xl font-semibold leading-tight text-white mb-12">
                 Construyamos Algo
                 <br />
                 Grandioso
@@ -55,12 +55,12 @@ const Contact = () => {
               </div>
               
               <div className="pt-12 border-t border-border space-y-4">
-                <p className="text-muted-foreground">
+                <p className="text-base leading-8 text-[#dccdffcc]">
                   Cada proyecto comienza con una conversación honesta. Escuchamos tu visión,
                   entendemos el problema en profundidad, y construimos soluciones que no solo
                   resuelven — sino que sorprenden.
                 </p>
-                <p className="text-muted-foreground">
+                <p className="text-base leading-8 text-[#dccdffcc]">
                   Si tenés un desafío que la tecnología convencional no ha podido resolver,
                   es probable que sea exactamente el tipo de problema que nos interesa.
                 </p>

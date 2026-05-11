@@ -74,8 +74,8 @@ const Contact = () => {
             <div className="grid md:grid-cols-2 gap-20">
               {/* Columna izquierda - info */}
               <div>
-                <h1 className="text-minimal text-muted-foreground mb-4">CONTACTANOS</h1>
-                <h2 className="text-4xl md:text-6xl font-light text-architectural mb-12">
+                <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80">CONTACTANOS</span>
+                <h2 className="text-5xl md:text-6xl font-semibold leading-tight text-white mt-4 mb-12">
                   Construyamos Algo
                   <br />
                   Grandioso
@@ -83,20 +83,20 @@ const Contact = () => {
 
                 <div className="space-y-8">
                   <div>
-                    <h3 className="text-minimal text-muted-foreground mb-2">EMAIL</h3>
-                    <a href="mailto:hola@agentika.com.ar" className="text-xl hover:text-muted-foreground transition-colors duration-300">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 mb-2">EMAIL</p>
+                    <a href="mailto:hola@agentika.com.ar" className="text-xl font-semibold text-white hover:text-[#b4a0ff]/80 transition-colors duration-300">
                       hola@agentika.com.ar
                     </a>
                   </div>
                   <div>
-                    <h3 className="text-minimal text-muted-foreground mb-2">TELÉFONO</h3>
-                    <a href="tel:+541124569524" className="text-xl hover:text-muted-foreground transition-colors duration-300">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 mb-2">TELÉFONO</p>
+                    <a href="tel:+541124569524" className="text-xl font-semibold text-white hover:text-[#b4a0ff]/80 transition-colors duration-300">
                       +54 (11) 2456-9524
                     </a>
                   </div>
                   <div>
-                    <h3 className="text-minimal text-muted-foreground mb-2">ESTUDIO</h3>
-                    <address className="text-xl not-italic">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 mb-2">ESTUDIO</p>
+                    <address className="text-xl font-semibold not-italic text-white">
                       Saavedra 817
                       <br />
                       CABA, Argentina
@@ -105,7 +105,7 @@ const Contact = () => {
                 </div>
 
                 <div className="pt-12 mt-12 border-t border-border space-y-4">
-                  <p className="text-muted-foreground">
+                  <p className="text-base leading-8 text-[#dccdffcc]">
                     Cada proyecto comienza con una conversación honesta. Escuchamos tu visión,
                     entendemos el problema en profundidad, y construimos soluciones que no solo
                     resuelven — sino que sorprenden.
@@ -115,10 +115,13 @@ const Contact = () => {
 
               {/* Columna derecha - formulario */}
               <div>
-                <h3 className="text-minimal text-muted-foreground mb-8">CONTANOS DE TU PROYECTO</h3>
+                <span className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 mb-4 inline-block">CONTANOS DE TU PROYECTO</span>
+                <h3 className="text-3xl md:text-4xl font-semibold text-white mb-8">
+                  CONTÁCTANOS
+                </h3>
                 <form onSubmit={handleSubmit} className="space-y-8" noValidate>
                   <div>
-                    <label htmlFor="name" className="text-minimal text-muted-foreground block mb-2">
+                    <label htmlFor="name" className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 block mb-2">
                       NOMBRE *
                     </label>
                     <input
@@ -134,7 +137,7 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="text-minimal text-muted-foreground block mb-2">
+                    <label htmlFor="email" className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 block mb-2">
                       EMAIL *
                     </label>
                     <input
@@ -150,7 +153,7 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="company" className="text-minimal text-muted-foreground block mb-2">
+                    <label htmlFor="company" className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 block mb-2">
                       EMPRESA
                     </label>
                     <input
@@ -165,7 +168,7 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="service" className="text-minimal text-muted-foreground block mb-2">
+                    <label htmlFor="service" className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 block mb-2">
                       SERVICIO DE INTERÉS *
                     </label>
                     <select
@@ -185,7 +188,7 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="budget" className="text-minimal text-muted-foreground block mb-2">
+                    <label htmlFor="budget" className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 block mb-2">
                       PRESUPUESTO ESTIMADO *
                     </label>
                     <select
@@ -204,7 +207,7 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="message" className="text-minimal text-muted-foreground block mb-2">
+                    <label htmlFor="message" className="text-xs uppercase tracking-[0.18em] text-[#b4a0ff]/80 block mb-2">
                       MENSAJE *
                     </label>
                     <textarea
