@@ -74,8 +74,8 @@ const GalaxyBackground = () => {
 
       // Density tuned for performance on mobile
       const isMobile = width < 768;
-      const divisor = isMobile ? 4500 : 2400;
-      const count = Math.min(420, Math.floor((width * height) / divisor));
+      const divisor = isMobile ? 3800 : 2000;
+      const count = Math.min(560, Math.floor((width * height) / divisor));
 
       stars = new Array(count).fill(0).map(() => {
         const z = Math.random();
@@ -83,13 +83,13 @@ const GalaxyBackground = () => {
           x: Math.random() * width,
           y: Math.random() * height,
           z,
-          r: 0.25 + z * 1.5,
-          baseAlpha: 0.25 + Math.random() * 0.7,
+          r: 0.35 + z * 2.1,
+          baseAlpha: 0.35 + Math.random() * 0.65,
           twinkle: Math.random() * Math.PI * 2,
-          twinkleSpeed: 0.004 + Math.random() * 0.018,
-          hue: 200 + Math.random() * 90,
-          sx: rand(0.0003, 0.0011),
-          sy: rand(0.0003, 0.0011),
+          twinkleSpeed: 0.006 + Math.random() * 0.022,
+          hue: 190 + Math.random() * 120,
+          sx: rand(0.0004, 0.0015),
+          sy: rand(0.0004, 0.0015),
           fx: Math.random() * Math.PI * 2,
           fy: Math.random() * Math.PI * 2,
         };
@@ -150,10 +150,10 @@ const GalaxyBackground = () => {
 
       const dark = isDarkRef.current;
       // In light mode: dark particles on light bg → invert lightness & alphas
-      const starLightness = dark ? 90 : 25;
-      const starAlphaMul = dark ? 1 : 1.4;
-      const nebulaAlphaMul = dark ? 1 : 0.7;
-      const nebulaLightness = dark ? 55 : 35;
+      const starLightness = dark ? 96 : 40;
+      const starAlphaMul = dark ? 1.2 : 1.5;
+      const nebulaAlphaMul = dark ? 1.2 : 0.9;
+      const nebulaLightness = dark ? 60 : 38;
       const auraColor = dark
         ? "hsla(260, 100%, 70%, 0.12)"
         : "hsla(260, 80%, 30%, 0.10)";
@@ -185,11 +185,11 @@ const GalaxyBackground = () => {
 
         // Smooth random drift via summed sines (cheap pseudo-noise)
         const driftX =
-          Math.sin(t * s.sx + s.fx) * 18 +
-          Math.cos(t * s.sx * 0.5 + s.fy) * 8;
+          Math.sin(t * s.sx + s.fx) * 24 +
+          Math.cos(t * s.sx * 0.6 + s.fy) * 14;
         const driftY =
-          Math.cos(t * s.sy + s.fy) * 18 +
-          Math.sin(t * s.sy * 0.6 + s.fx) * 8;
+          Math.cos(t * s.sy + s.fy) * 24 +
+          Math.sin(t * s.sy * 0.7 + s.fx) * 14;
 
         // Parallax: deeper stars move less, foreground moves more
         const parallax = -scrollY * (0.05 + s.z * 0.35);
@@ -219,8 +219,8 @@ const GalaxyBackground = () => {
 
         const fx = px + ox;
         const fy = py + oy;
-        const alpha = Math.min(1, (s.baseAlpha * twinkleA + glow * 0.6) * starAlphaMul);
-        const radius = s.r + glow * 1.6;
+        const alpha = Math.min(1, (s.baseAlpha * twinkleA + glow * 0.8) * starAlphaMul);
+        const radius = s.r + glow * 2.2;
 
         if (glow > 0.08) {
           const halo = ctx.createRadialGradient(fx, fy, 0, fx, fy, radius * 6);

@@ -3,7 +3,7 @@ const Hero = () => {
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Content */}
       <div className="relative z-10 w-full text-center max-w-4xl mx-auto px-3 sm:px-6 pointer-events-none overflow-visible">
-        <h1 className="font-euronism inline-block max-w-full whitespace-nowrap text-[11.12vw] sm:text-[12.8vw] md:text-8xl lg:text-9xl text-foreground mb-8 reveal leading-[0.98] tracking-[0.01em] md:tracking-[-0.02em]">
+        <h1 className="font-euronism inline-block max-w-full whitespace-nowrap text-[11.12vw] sm:text-[12.8vw] md:text-8xl lg:text-9xl text-foreground mb-8 reveal leading-[0.98] tracking-[0.14em] md:tracking-[0.12em] transform -translate-x-10">
           AGENTIKA
         </h1>
         <p className="font-montserrat-alt text-xl md:text-2xl text-foreground/70 tracking-wide max-w-2xl mx-auto reveal-delayed">
